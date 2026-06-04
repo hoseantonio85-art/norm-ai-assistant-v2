@@ -237,6 +237,7 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState<null | (() => void)>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -265,24 +266,63 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     setBusy(true);
     push({ role: "status", text: "Немного подумаю" });
     await wait(700);
-    replaceStatus("Проверяю знания о компании");
+    replaceStatus("Ищу в знаниях о компании");
     await wait(800);
     removeStatus();
     push({
       role: "assistant",
       rich: (
         <>
-          <p>Нашёл в знаниях компании.</p>
+          <p>Это был неожиданный вопрос, и у меня нет на него ответа.</p>
+          <p>Если ты готов поделиться со мной этим знанием, я запомню его и применю в нужный момент.</p>
+        </>
+      ),
+    });
+    push({
+      role: "actions",
+      actions: [{ label: "📎 Прикрепить документ", onClick: simulateDirectorUpload }],
+    });
+    setPendingUpload(() => simulateDirectorUpload);
+    setBusy(false);
+  }
+
+  async function simulateDirectorUpload() {
+    setPendingUpload(null);
+    setMessages((prev) => prev.filter((m) => m.role !== "actions"));
+    push({ role: "file", fileName: "ФИО директора и прочая инфа.pdf", fileMeta: "10 МБ" });
+    await wait(500);
+    setBusy(true);
+    push({ role: "status", text: "Разбираю документ" });
+    await wait(900);
+    replaceStatus("Ищу нужную информацию");
+    await wait(900);
+    replaceStatus("Сохраняю новое знание");
+    await wait(900);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Отлично!</p>
           <p><strong>ООО «Сам Издат Инкорпорейтед»</strong></p>
           <p>Генеральный директор:<br/><strong>Семён Петрович Колбасников</strong></p>
           <p>ИНН 772335154264<br/>Занимает пост с 1986 года.</p>
+          <p className="np-muted">Теперь я буду хранить эту информацию для твоей пользы.</p>
+          <p>Хочешь узнать больше информации о сотрудниках этой компании? Твой документ содержал эту информацию.</p>
         </>
       ),
       source: {
         fileName: "ФИО директора и прочая инфа.pdf",
         fileSize: "10 МБ",
-        quote: "В документе указано, что генеральный директор ООО «Сам Издат Инкорпорейтед» — Семён Петрович Колбасников.",
+        quote: "Генеральный директор ООО «Сам Издат Инкорпорейтед» — Семён Петрович Колбасников, ИНН 772335154264, занимает пост с 1986 года.",
       },
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Информация о сотрудниках", onClick: () => onToast("Этот переход будет добавлен позже") },
+        { label: "Передать новые знания", onClick: () => onToast("Этот переход будет добавлен позже") },
+      ],
     });
     setBusy(false);
   }
@@ -462,7 +502,14 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
         </div>
 
         <form className="np-input-wrap" onSubmit={onSubmit}>
-          <button type="button" className="np-icon-btn" aria-label="Прикрепить"><Icon name="clip" size={18} /></button>
+          <button
+            type="button"
+            className="np-icon-btn"
+            aria-label="Прикрепить"
+            onClick={() => { if (pendingUpload) pendingUpload(); else onToast("Прикрепи документ — Норм его разберёт"); }}
+          >
+            <Icon name="clip" size={18} />
+          </button>
           <input
             className="np-input"
             placeholder="Я твой ИИ помощник"
