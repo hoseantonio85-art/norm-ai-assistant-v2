@@ -139,16 +139,27 @@ function SourcePopover({ source, onClose }: { source: SourceData; onClose: () =>
         <span className="np-pop-title">Источник</span>
         <button className="np-icon-btn" onClick={onClose} aria-label="Закрыть"><Icon name="close" size={16} /></button>
       </div>
-      <div className="np-file-card">
-        <div className="np-file-ic"><Icon name="file" size={18} /></div>
-        <div>
-          <div className="np-file-name">{source.fileName}</div>
-          {source.fileSize && <div className="np-file-meta">{source.fileSize}</div>}
+      {source.files && source.files.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          {source.files.map((f) => (
+            <div key={f} className="np-file-card" style={{ marginBottom: 0 }}>
+              <div className="np-file-ic"><Icon name="file" size={18} /></div>
+              <div><div className="np-file-name">{f}</div></div>
+            </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="np-file-card">
+          <div className="np-file-ic"><Icon name="file" size={18} /></div>
+          <div>
+            <div className="np-file-name">{source.fileName}</div>
+            {source.fileSize && <div className="np-file-meta">{source.fileSize}</div>}
+          </div>
+        </div>
+      )}
       <p className="np-quote">«{source.quote}»</p>
       <button className="np-btn np-btn-ghost" disabled>Перейти к источнику</button>
-      <p className="np-pop-note">Переход дальше в этом MVP не реализован</p>
+      <p className="np-pop-note">{source.note ?? "Переход дальше в этом MVP не реализован"}</p>
     </div>
   );
 }
