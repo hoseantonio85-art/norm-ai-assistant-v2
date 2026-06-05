@@ -7,6 +7,8 @@ interface SourceData {
   fileName: string;
   fileSize?: string;
   quote: string;
+  files?: string[];
+  note?: string;
 }
 
 interface Msg {
