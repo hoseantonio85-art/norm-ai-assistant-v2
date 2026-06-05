@@ -7,6 +7,8 @@ interface SourceData {
   fileName: string;
   fileSize?: string;
   quote: string;
+  files?: string[];
+  note?: string;
 }
 
 interface Msg {
@@ -137,16 +139,27 @@ function SourcePopover({ source, onClose }: { source: SourceData; onClose: () =>
         <span className="np-pop-title">Источник</span>
         <button className="np-icon-btn" onClick={onClose} aria-label="Закрыть"><Icon name="close" size={16} /></button>
       </div>
-      <div className="np-file-card">
-        <div className="np-file-ic"><Icon name="file" size={18} /></div>
-        <div>
-          <div className="np-file-name">{source.fileName}</div>
-          {source.fileSize && <div className="np-file-meta">{source.fileSize}</div>}
+      {source.files && source.files.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+          {source.files.map((f) => (
+            <div key={f} className="np-file-card" style={{ marginBottom: 0 }}>
+              <div className="np-file-ic"><Icon name="file" size={18} /></div>
+              <div><div className="np-file-name">{f}</div></div>
+            </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="np-file-card">
+          <div className="np-file-ic"><Icon name="file" size={18} /></div>
+          <div>
+            <div className="np-file-name">{source.fileName}</div>
+            {source.fileSize && <div className="np-file-meta">{source.fileSize}</div>}
+          </div>
+        </div>
+      )}
       <p className="np-quote">«{source.quote}»</p>
       <button className="np-btn np-btn-ghost" disabled>Перейти к источнику</button>
-      <p className="np-pop-note">Переход дальше в этом MVP не реализован</p>
+      <p className="np-pop-note">{source.note ?? "Переход дальше в этом MVP не реализован"}</p>
     </div>
   );
 }
@@ -231,6 +244,7 @@ const SCENARIOS = {
   director: "Кто генеральный директор компании СамИздат Инкорпорейтед?",
   gpu: "Кто отвечает за закупку GPU?",
   company: "Что ты знаешь о моей компании?",
+  products: "Какие продукты есть у компании?",
 };
 
 function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: string | null; onClose: () => void; onToast: (m: string) => void; }) {
@@ -280,7 +294,7 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     });
     push({
       role: "actions",
-      actions: [{ label: "📎 Прикрепить документ", onClick: simulateDirectorUpload }],
+      actions: [{ label: "📎 Прикрепить документ", onClick: () => simulateDirectorUpload() }],
     });
     setPendingUpload(() => simulateDirectorUpload);
     setBusy(false);
@@ -320,8 +334,8 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     push({
       role: "actions",
       actions: [
-        { label: "Информация о сотрудниках", onClick: () => onToast("Этот переход будет добавлен позже") },
-        { label: "Передать новые знания", onClick: () => onToast("Этот переход будет добавлен позже") },
+        { label: "Информация о сотрудниках", onClick: () => continueDialog("Информация о сотрудниках") },
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
       ],
     });
     setBusy(false);
@@ -345,7 +359,7 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     });
     push({
       role: "actions",
-      actions: [{ label: "Загрузить документ", onClick: simulateUpload }],
+      actions: [{ label: "Загрузить документ", onClick: () => simulateUpload() }],
     });
     setBusy(false);
   }
@@ -381,9 +395,9 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     push({
       role: "actions",
       actions: [
-        { label: "Что ещё известно про ИТ?", onClick: () => onToast("Этот переход будет добавлен позже") },
-        { label: "Показать связанные риски", onClick: () => onToast("Этот переход будет добавлен позже") },
-        { label: "Передать новые знания", onClick: () => onToast("Этот переход будет добавлен позже") },
+        { label: "Что ещё известно про ИТ?", onClick: () => continueDialog("Что ещё известно про ИТ?") },
+        { label: "Показать связанные риски", onClick: () => continueDialog("Какие риски связаны с продуктом?") },
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
       ],
     });
     setBusy(false);
@@ -406,16 +420,362 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
           <CompanySummaryCard />
         </>
       ),
+      source: {
+        fileName: "Сводные знания о компании",
+        fileSize: "3 источника",
+        quote: "Профиль собран из ФИО директора и прочая инфа.pdf, Отчёт внутреннего аудита 2026.pdf и анонса на сайте компании.",
+        files: [
+          "ФИО директора и прочая инфа.pdf",
+          "Отчёт внутреннего аудита 2026.pdf",
+          "Анонс на сайте компании",
+        ],
+        note: "Это агрегированный ответ. В MVP переход к отдельным источникам не реализован.",
+      },
     });
     push({
       role: "actions",
       actions: [
-        { label: "Информация о сотрудниках", onClick: () => onToast("Этот переход будет добавлен позже") },
-        { label: "Передать новые знания", onClick: () => onToast("Этот переход будет добавлен позже") },
-        { label: "Показать источники", onClick: () => onToast("Источники: ФИО директора и прочая инфа.pdf, Отчёт внутреннего аудита 2026.pdf, Анонс на сайте компании") },
+        { label: "Информация о сотрудниках", onClick: () => continueDialog("Информация о сотрудниках") },
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
+        { label: "Что ещё неизвестно?", onClick: () => continueDialog("Что ещё неизвестно?") },
       ],
     });
     setBusy(false);
+  }
+
+  async function runProducts() {
+    setBusy(true);
+    push({ role: "status", text: "Проверяю знания о компании" });
+    await wait(700);
+    replaceStatus("Ищу подтверждённые сведения");
+    await wait(800);
+    replaceStatus("Собираю короткий ответ");
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>По текущим знаниям компания развивает AI-продукты для e-commerce и внутренних корпоративных систем.</p>
+          <p><strong>Главный известный продукт:</strong><br/>Система AI-рекомендаций товаров</p>
+          <p><strong>Что известно:</strong></p>
+          <ul className="np-sum-list">
+            <li>продукт помогает подбирать релевантные товары для пользователей;</li>
+            <li>используется на сайте компании;</li>
+            <li>связан с ростом нагрузки на вычислительные мощности;</li>
+            <li>для стабильной работы важны GPU-ресурсы.</li>
+          </ul>
+          <p className="np-muted">Часть информации подтверждена открытым анонсом на сайте компании и внутренними документами. Более подробного описания продуктовой линейки пока мало.</p>
+        </>
+      ),
+      source: {
+        fileName: "Сведения о продуктах",
+        fileSize: "2 источника",
+        quote: "Система AI-рекомендаций товаров используется как один из ключевых AI-продуктов компании.",
+        files: ["Анонс на сайте компании", "Отчёт внутреннего аудита 2026.pdf"],
+        note: "Это агрегированный ответ. В MVP переход к отдельным источникам не реализован.",
+      },
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Расскажи подробнее про AI-рекомендации", onClick: () => continueDialog("Расскажи подробнее про AI-рекомендации") },
+        { label: "Какие риски связаны с продуктом?", onClick: () => continueDialog("Какие риски связаны с продуктом?") },
+        { label: "Что ещё неизвестно?", onClick: () => continueDialog("Что ещё неизвестно?") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runEmployees() {
+    setBusy(true);
+    push({ role: "status", text: "Проверяю документы" });
+    await wait(700);
+    replaceStatus("Ищу сведения о сотрудниках");
+    await wait(800);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>В загруженных знаниях есть отдельные сведения о сотрудниках, но полного профиля команды пока нет.</p>
+          <p><strong>Что уже встречается:</strong></p>
+          <ul className="np-sum-list">
+            <li>генеральный директор: Семён Петрович Колбасников;</li>
+            <li>упоминается направление ИТ и кибербезопасности;</li>
+            <li>есть признаки, что за GPU и инфраструктуру отвечает технический блок.</li>
+          </ul>
+          <p className="np-muted">Полной оргструктуры, численности и списка подразделений пока не хватает.</p>
+        </>
+      ),
+      source: {
+        fileName: "Сведения о сотрудниках",
+        fileSize: "2 источника",
+        quote: "Генеральный директор — Семён Петрович Колбасников. Упоминается направление ИТ и кибербезопасности.",
+        files: ["ФИО директора и прочая инфа.pdf", "Отчёт внутреннего аудита 2026.pdf"],
+        note: "Это агрегированный ответ. В MVP переход к отдельным источникам не реализован.",
+      },
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
+        { label: "Что нужно добавить в профиль?", onClick: () => continueDialog("Что нужно добавить в профиль?") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runTransfer() {
+    setBusy(true);
+    push({ role: "status", text: "Готовлю место для нового знания" });
+    await wait(800);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Хорошо. Ты можешь передать знание текстом или прикрепить документ.</p>
+          <p><strong>Лучше всего подойдут:</strong></p>
+          <ul className="np-sum-list">
+            <li>описание подразделений;</li>
+            <li>список ключевых сотрудников;</li>
+            <li>продуктовая линейка;</li>
+            <li>внутренние регламенты;</li>
+            <li>документы по инфраструктуре и ИТ.</li>
+          </ul>
+          <p>Я разберу информацию и добавлю её в профиль компании.</p>
+        </>
+      ),
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "📎 Прикрепить документ", onClick: () => simulateTransferUpload() },
+        { label: "Ввести знание текстом", onClick: () => onToast("Ввод текстом будет доступен позже") },
+      ],
+    });
+    setPendingUpload(() => simulateTransferUpload);
+    setBusy(false);
+  }
+
+  async function simulateTransferUpload() {
+    setPendingUpload(null);
+    setMessages((prev) => prev.filter((m) => m.role !== "actions"));
+    push({ role: "file", fileName: "Оргструктура компании.pdf", fileMeta: "PDF · 4 МБ" });
+    await wait(500);
+    setBusy(true);
+    push({ role: "status", text: "Разбираю документ" });
+    await wait(900);
+    replaceStatus("Обновляю профиль компании");
+    await wait(900);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Я добавил новое знание в профиль компании.</p>
+          <p className="np-muted">Теперь в профиле есть черновая информация об организационной структуре. В MVP я не открываю отдельный экран профиля, но могу использовать это знание в следующих ответах.</p>
+        </>
+      ),
+      source: {
+        fileName: "Оргструктура компании.pdf",
+        fileSize: "PDF · 4 МБ",
+        quote: "Документ описывает черновую организационную структуру компании.",
+      },
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Информация о сотрудниках", onClick: () => continueDialog("Информация о сотрудниках") },
+        { label: "Что ещё неизвестно?", onClick: () => continueDialog("Что ещё неизвестно?") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runRecommendDetail() {
+    setBusy(true);
+    push({ role: "status", text: "Собираю информацию о продукте" });
+    await wait(800);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>AI-рекомендации товаров — это продукт, который помогает подбирать пользователю более релевантные товары на основе контекста и поведения.</p>
+          <p><strong>Почему это важно для риск-профиля:</strong></p>
+          <ul className="np-sum-list">
+            <li>продукт зависит от качества данных;</li>
+            <li>растёт нагрузка на вычислительные мощности;</li>
+            <li>сбои в рекомендациях могут влиять на продажи и клиентский опыт;</li>
+            <li>дефицит GPU может стать операционным риском.</li>
+          </ul>
+        </>
+      ),
+      source: {
+        fileName: "AI-рекомендации",
+        fileSize: "2 источника",
+        quote: "Продукт зависит от качества данных и вычислительных мощностей; дефицит GPU — потенциальный операционный риск.",
+        files: ["Анонс на сайте компании", "Отчёт внутреннего аудита 2026.pdf"],
+        note: "Это агрегированный ответ. В MVP переход к отдельным источникам не реализован.",
+      },
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Какие риски связаны с продуктом?", onClick: () => continueDialog("Какие риски связаны с продуктом?") },
+        { label: "Что известно про GPU?", onClick: () => continueDialog("Что известно про GPU?") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runRisks() {
+    setBusy(true);
+    push({ role: "status", text: "Оцениваю зоны риска" });
+    await wait(800);
+    replaceStatus("Сопоставляю с документами");
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Предварительно вижу несколько зон риска:</p>
+          <p><strong>1. Технический риск.</strong> Рост нагрузки и дефицит GPU могут повлиять на стабильность продукта.</p>
+          <p><strong>2. Риск качества данных.</strong> Если данные неполные или устаревшие, рекомендации могут стать менее точными.</p>
+          <p><strong>3. Операционный риск.</strong> Если продукт критичен для продаж, сбой может повлиять на бизнес-показатели.</p>
+          <p className="np-muted">Это не финальная оценка риска, а предварительный вывод по имеющимся знаниям.</p>
+        </>
+      ),
+      source: {
+        fileName: "Зоны риска продукта",
+        fileSize: "2 источника",
+        quote: "Дефицит GPU и качество данных — ключевые операционные риски, связанные с продуктом AI-рекомендаций.",
+        files: ["Отчёт внутреннего аудита 2026.pdf", "Анонс на сайте компании"],
+        note: "Это агрегированный ответ. В MVP переход к отдельным источникам не реализован.",
+      },
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Показать связанные знания", onClick: () => continueDialog("Что известно про GPU?") },
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runUnknowns() {
+    setBusy(true);
+    push({ role: "status", text: "Сверяюсь с профилем компании" });
+    await wait(800);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>В профиле компании пока не хватает нескольких важных блоков:</p>
+          <ul className="np-sum-list">
+            <li>численность сотрудников;</li>
+            <li>структура подразделений;</li>
+            <li>владельцы ключевых процессов;</li>
+            <li>полный список продуктов;</li>
+            <li>финансовые показатели;</li>
+            <li>карта ИТ-систем;</li>
+            <li>владельцы рисков и мер.</li>
+          </ul>
+          <p className="np-muted">Если добавить эти знания, я смогу точнее отвечать на вопросы и лучше связывать события, риски и документы.</p>
+        </>
+      ),
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
+        { label: "Что добавить сначала?", onClick: () => continueDialog("Что добавить сначала?") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runFirstToAdd() {
+    setBusy(true);
+    push({ role: "status", text: "Подбираю приоритеты" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Я бы начал с трёх блоков — они дают самый сильный эффект для риск-профиля:</p>
+          <ul className="np-sum-list">
+            <li><strong>Оргструктура и ключевые сотрудники</strong> — чтобы связывать риски с владельцами.</li>
+            <li><strong>Продуктовая линейка</strong> — чтобы понимать бизнес-критичность.</li>
+            <li><strong>Карта ИТ-систем</strong> — чтобы оценивать технические риски.</li>
+          </ul>
+          <p>С этим я смогу заметно точнее отвечать на следующие вопросы.</p>
+        </>
+      ),
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runGpuKnown() {
+    setBusy(true);
+    push({ role: "status", text: "Ищу сведения про GPU" });
+    await wait(800);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>По имеющимся знаниям GPU-ресурсы критичны для продукта AI-рекомендаций.</p>
+          <ul className="np-sum-list">
+            <li>в пиковые периоды загрузка достигает до 90%;</li>
+            <li>за закупку отвечает направление ИТ и кибербезопасности;</li>
+            <li>процесс закупки новых мощностей инициирован в первом квартале 2026 года.</li>
+          </ul>
+        </>
+      ),
+      source: {
+        fileName: "Отчёт внутреннего аудита 2026.pdf",
+        fileSize: "10 МБ",
+        quote: "Текущие ресурсы GPU исчерпаны на уровне до 90% в пиковые периоды нагрузки.",
+      },
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Какие риски связаны с продуктом?", onClick: () => continueDialog("Какие риски связаны с продуктом?") },
+        { label: "Передать новые знания", onClick: () => continueDialog("Передать новые знания") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  function continueDialog(label: string) {
+    push({ role: "user", text: label });
+    routeLabel(label);
+  }
+
+  function routeLabel(label: string) {
+    const l = label.toLowerCase();
+    if (l.includes("сотрудник")) return runEmployees();
+    if (l.includes("передать новые знания")) return runTransfer();
+    if (l.includes("подробнее про ai") || l.includes("про ai-рекоменд")) return runRecommendDetail();
+    if (l.includes("риски связаны") || l.includes("связанные риски")) return runRisks();
+    if (l.includes("что ещё неизвестно") || l.includes("нужно добавить в профиль")) return runUnknowns();
+    if (l.includes("добавить сначала")) return runFirstToAdd();
+    if (l.includes("про gpu") || l.includes("известно про ит")) return runGpuKnown();
+    onToast("Этот переход будет добавлен позже");
   }
 
   function dispatch(text: string) {
@@ -425,6 +785,7 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     if (n.includes("ген") && n.includes("директор") && n.includes("самиздат")) runDirector();
     else if (n.includes("gpu") || (n.includes("закупк") && n.includes("gpu"))) runGpu();
     else if (n.includes("что ты знаешь") || (n.includes("знаешь") && n.includes("компани"))) runCompany();
+    else if (n.includes("продукт") || (n.includes("чем") && n.includes("занимается"))) runProducts();
     else {
       setBusy(true);
       push({ role: "status", text: "Немного подумаю" });
