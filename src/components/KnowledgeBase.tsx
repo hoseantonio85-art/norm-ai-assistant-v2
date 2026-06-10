@@ -261,101 +261,186 @@ function KbToast({ message, onDone }: { message: string; onDone: () => void }) {
 
 function AreaPage({
   area,
+  areas,
+  onSelect,
   onBack,
   onAddFact,
   toast,
+  onOpenChat,
 }: {
   area: Area;
+  areas: Area[];
+  onSelect: (id: string) => void;
   onBack: () => void;
   onAddFact: () => void;
   toast: (m: string) => void;
+  onOpenChat?: (q: string) => void;
 }) {
   const status = statusFromPercent(area.percent);
   return (
     <div className="np-area-page">
       <button className="np-area-back" onClick={onBack}>← Профиль компании</button>
 
-      <header className="np-area-header">
-        <div className="np-area-header-main">
-          <h2 className="np-area-title">{area.title}</h2>
-          <div className="np-area-meta">
-            <span className="np-area-percent">{area.percent}%</span>
-            <span className={statusClass(status)}>{STATUS_LABEL[status]}</span>
-          </div>
-          <p className="np-area-why">{area.why}</p>
-        </div>
-        <Ring percent={area.percent} size={96} stroke={8} />
-      </header>
+      <div className="np-area-layout">
+        <aside className="np-area-left">
+          <div className="np-area-left-title">Области знаний</div>
+          {areas.map((a) => {
+            const s = statusFromPercent(a.percent);
+            const isActive = a.id === area.id;
+            return (
+              <button
+                key={a.id}
+                className={`np-area-left-item ${isActive ? "active" : ""}`}
+                onClick={() => onSelect(a.id)}
+              >
+                <div className="np-area-left-name">{a.title}</div>
+                <span className={statusClass(s)}>{STATUS_LABEL[s]}</span>
+              </button>
+            );
+          })}
+        </aside>
 
-      <section className="np-area-summary">
-        <div className="np-kb-summary-eyebrow">Как Норм понимает эту область</div>
-        <p>{area.aiSummary}</p>
-      </section>
-
-      <section className="np-area-section">
-        <div className="np-area-section-head">
-          <h3>Ключевые знания</h3>
-          <span className="np-muted">{area.facts.length}</span>
-        </div>
-        <ul className="np-fact-list">
-          {area.facts.map((f, i) => (
-            <li key={i} className="np-fact">
-              <div className="np-fact-text">{f.text}</div>
-              <div className="np-fact-meta">
-                <span>📄 {f.source}</span>
-                <span>· обновлено {f.date}</span>
+        <div className="np-area-center">
+          <header className="np-area-header">
+            <div className="np-area-header-main">
+              <h2 className="np-area-title">{area.title}</h2>
+              <div className="np-area-meta">
+                <span className={statusClass(status)}>{STATUS_LABEL[status]}</span>
+                <span className="np-area-percent">{area.percent}%</span>
               </div>
-              <div className="np-fact-actions">
-                <button className="np-fact-link" onClick={() => toast("Редактирование знания будет добавлено позже")}>Редактировать</button>
-                <button className="np-fact-link np-fact-link-danger" onClick={() => toast("Удаление знания будет добавлено позже")}>Удалить</button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+              <p className="np-area-why">{area.why}</p>
+            </div>
+            <Ring percent={area.percent} size={88} stroke={8} />
+          </header>
 
-      <section className="np-area-section">
-        <h3>Что важно для рисков</h3>
-        <div className="np-risk-grid">
-          {area.risks.map((r, i) => (
-            <div key={i} className="np-risk-card">{r}</div>
-          ))}
+          <section className="np-area-summary">
+            <div className="np-kb-summary-eyebrow">Как Норм понимает эту область</div>
+            <p>{area.aiSummary}</p>
+          </section>
+
+          <section className="np-area-section">
+            <div className="np-area-section-head">
+              <h3>Ключевые знания</h3>
+              <span className="np-muted">{area.facts.length}</span>
+            </div>
+            <ul className="np-fact-list">
+              {area.facts.map((f, i) => (
+                <li key={i} className="np-fact">
+                  <div className="np-fact-row">
+                    <div className="np-fact-text">{f.text}</div>
+                    <button className="np-icon-btn" onClick={() => toast("Действия со знанием будут добавлены позже")} aria-label="Меню">⋯</button>
+                  </div>
+                  <div className="np-fact-meta">
+                    <span className="np-source-badge" onClick={() => toast("Переход к источнику будет добавлен позже")}>📄 {f.source}</span>
+                    <span>· обновлено {f.date}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="np-area-section">
+            <h3>Источники <span className="np-muted">· {area.sourcesDetailed.length}</span></h3>
+            <ul className="np-source-list">
+              {area.sourcesDetailed.map((s, i) => (
+                <li key={i} className="np-source-item" onClick={() => toast("Переход к источнику будет добавлен позже")}>
+                  <span className="np-source-type">{s.type}</span>
+                  <span className="np-source-name">{s.name}</span>
+                  <span className="np-source-go">→</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
-      </section>
 
-      <section className="np-area-section">
-        <h3>Источники <span className="np-muted">· {area.sourcesDetailed.length}</span></h3>
-        <ul className="np-source-list">
-          {area.sourcesDetailed.map((s, i) => (
-            <li key={i} className="np-source-item" onClick={() => toast("Переход к источнику будет добавлен позже")}>
-              <span className="np-source-type">{s.type}</span>
-              <span className="np-source-name">{s.name}</span>
-              <span className="np-source-go">→</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+        <aside className="np-area-right">
+          <section className="np-area-side-card">
+            <h4>Связь с рисками</h4>
+            <div className="np-area-side-row">
+              <span>Рисков</span>
+              <strong>{area.risks.length}</strong>
+            </div>
+            <div className="np-area-side-meta">↑ +1 за месяц</div>
+          </section>
 
-      <section className="np-area-section np-area-gaps">
-        <h3>Что стоит добавить</h3>
-        <ul className="np-sum-list">
-          {area.gaps.map((g, i) => <li key={i}>{g}</li>)}
-        </ul>
-      </section>
+          <section className="np-area-side-card">
+            <h4>Влияние на анализ</h4>
+            <div className="np-area-side-row"><span>Оценка рисков</span><strong>10</strong></div>
+            <div className="np-area-side-row"><span>AI рекомендации</span><strong>65</strong></div>
+          </section>
 
-      <footer className="np-area-actions">
-        <button className="np-btn np-btn-primary" onClick={onAddFact}>Добавить знание</button>
-        <button className="np-btn" onClick={() => toast("Редактирование области будет добавлено позже")}>Редактировать область</button>
-        <button className="np-btn np-btn-danger" onClick={() => toast("Удаление знания будет добавлено позже")}>Удалить знание</button>
-      </footer>
+          <section className="np-area-side-card np-area-improve">
+            <h4>Улучшить знания</h4>
+            <ul className="np-area-improve-list">
+              {area.gaps.slice(0, 4).map((g, i) => (
+                <li key={i} onClick={() => toast("Можно добавить через чат Норма")}>{g}</li>
+              ))}
+            </ul>
+            <button className="np-btn" style={{ marginTop: 10 }} onClick={onAddFact}>+ Добавить знание</button>
+          </section>
+        </aside>
+      </div>
+
+      <button
+        className="np-area-fab"
+        onClick={() => onOpenChat && onOpenChat(`Хочу дополнить знания в разделе ${area.title}`)}
+      >
+        ✨ Дополнить знания
+      </button>
     </div>
   );
 }
 
-function ProfileTab() {
+const IMPROVE_ITEMS: { title: string; why: string; gain: number; importance: "Высокая" | "Средняя" }[] = [
+  { title: "Карта ИТ-систем", why: "Важно для оценки технических и операционных рисков.", gain: 8, importance: "Высокая" },
+  { title: "Оргструктура и владельцы процессов", why: "Поможет связывать риски, инциденты и меры с ответственными.", gain: 7, importance: "Высокая" },
+  { title: "Финансовая отчётность", why: "Нужна для оценки кредитных и финансовых рисков.", gain: 6, importance: "Средняя" },
+  { title: "Список ключевых контрагентов", why: "Поможет выявлять зависимости и концентрацию поставщиков.", gain: 5, importance: "Средняя" },
+  { title: "Описание AI-продукта", why: "Поможет точнее связывать продуктовые и ИТ-риски.", gain: 4, importance: "Средняя" },
+];
+
+function ImproveDrawer({ onClose, onTransfer, toast }: { onClose: () => void; onTransfer: () => void; toast: (m: string) => void }) {
+  return (
+    <div className="np-drawer-backdrop" onClick={onClose}>
+      <aside className="np-drawer np-improve-drawer" onClick={(e) => e.stopPropagation()}>
+        <div className="np-drawer-head">
+          <div>
+            <div className="np-drawer-eyebrow">Индекс знания · 64%</div>
+            <h3 className="np-drawer-title">Как улучшить профиль</h3>
+          </div>
+          <button className="np-icon-btn" onClick={onClose} aria-label="Закрыть">✕</button>
+        </div>
+        <div className="np-drawer-body">
+          <ul className="np-improve-list">
+            {IMPROVE_ITEMS.map((it, i) => (
+              <li key={i} className="np-improve-item">
+                <div className="np-improve-rank">{i + 1}</div>
+                <div className="np-improve-main">
+                  <div className="np-improve-title">{it.title}</div>
+                  <div className="np-improve-why">{it.why}</div>
+                  <div className="np-improve-meta">
+                    <span className={`np-improve-badge ${it.importance === "Высокая" ? "high" : "mid"}`}>Важность: {it.importance}</span>
+                    <span className="np-improve-gain">+{it.gain}% к индексу</span>
+                  </div>
+                </div>
+                <button className="np-btn np-btn-primary np-improve-cta" onClick={() => toast("Сценарий добавления знаний будет реализован через чат")}>Добавить знания</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="np-drawer-foot">
+          <button className="np-btn np-btn-primary" style={{ flex: 1 }} onClick={onTransfer}>Передать новые знания Норму</button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function ProfileTab({ onOpenChat }: { onOpenChat?: (q: string) => void }) {
   const [areas, setAreas] = useState<Area[]>(AREAS_INITIAL);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [improveOpen, setImproveOpen] = useState(false);
   const active = activeId ? areas.find((a) => a.id === activeId) ?? null : null;
 
   const handleAddFact = (id: string) => {
@@ -385,9 +470,12 @@ function ProfileTab() {
       <>
         <AreaPage
           area={active}
+          areas={areas}
+          onSelect={setActiveId}
           onBack={() => setActiveId(null)}
           onAddFact={() => handleAddFact(active.id)}
           toast={setToast}
+          onOpenChat={onOpenChat}
         />
         {toast && <KbToast message={toast} onDone={() => setToast(null)} />}
       </>
@@ -396,66 +484,79 @@ function ProfileTab() {
 
   return (
     <>
-      <section className="np-kb-summary">
-        <div className="np-kb-summary-head">
-          <div className="np-kb-summary-eyebrow">Как Норм понимает компанию</div>
-          <h3>ООО «СамИздат Инкорпорейтед» — разработчик AI-рекомендательных продуктов</h3>
-          <p>
-            Я уверенно понимаю профиль компании и её основные продукты. Хорошо ориентируюсь в
-            аудитах и инфраструктуре, но мало знаю про финансы, контрагентов и полную
-            оргструктуру. С этим могу заметно точнее работать с рисками.
-          </p>
-        </div>
-        <div className="np-kb-index">
-          <Ring percent={INDEX_PERCENT} size={96} stroke={8} />
-          <div>
-            <div className="np-kb-index-label">Индекс знания компании</div>
-            <div className="np-kb-index-note">Растёт, когда ты добавляешь документы и знания</div>
+      <div className="np-kb-top">
+        <section className="np-kb-summary np-kb-summary-solo">
+          <div className="np-kb-summary-head">
+            <div className="np-kb-summary-eyebrow">Как Норм понимает компанию</div>
+            <h3>ООО «СамИздат Инкорпорейтед» — разработчик AI-рекомендательных продуктов</h3>
+            <p>
+              Я уверенно понимаю профиль компании и её основные продукты. Хорошо ориентируюсь в
+              аудитах и инфраструктуре, но мало знаю про финансы, контрагентов и полную
+              оргструктуру. С этим могу заметно точнее работать с рисками.
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
+        <button className="np-index-widget" onClick={() => setImproveOpen(true)} aria-label="Открыть улучшение профиля">
+          <Ring percent={INDEX_PERCENT} size={88} stroke={8} />
+          <div className="np-index-widget-text">
+            <div className="np-index-widget-title">Индекс знания</div>
+            <div className="np-index-widget-sub">Показывает, насколько хорошо Норм понимает компанию</div>
+            <div className="np-index-widget-meta">+12% за месяц · 3 области можно улучшить</div>
+          </div>
+        </button>
+      </div>
 
       <section className="np-kb-grid">
         {areas.map((a) => {
           const s = statusFromPercent(a.percent);
           return (
-            <article key={a.id} className="np-kb-card">
-              <div className="np-kb-card-head">
-                <Ring percent={a.percent} size={56} stroke={6} />
+            <article
+              key={a.id}
+              className="np-kb-card np-kb-card-clickable"
+              onClick={() => setActiveId(a.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") setActiveId(a.id); }}
+            >
+              <div className="np-kb-card-top">
                 <div className="np-kb-card-title">
                   <h4>{a.title}</h4>
                   <span className={statusClass(s)}>{STATUS_LABEL[s]}</span>
                 </div>
+                <Ring percent={a.percent} size={56} stroke={6} />
               </div>
               <p className="np-kb-card-insight">{a.insight}</p>
               <div className="np-kb-card-foot">
                 <span className="np-muted">{a.sourcesDetailed.length} источников · {a.facts.length} знаний</span>
-                <button className="np-btn np-btn-open" onClick={() => setActiveId(a.id)}>Открыть</button>
               </div>
             </article>
           );
         })}
       </section>
 
-      <div className="np-kb-row2">
-        <section className="np-kb-block np-kb-risks">
-          <h3>Что важно для рисков</h3>
-          <ul className="np-sum-list">
-            <li>GPU-инфраструктура — узкое место для AI-продуктов.</li>
-            <li>Высокая концентрация знаний на CEO — единая точка отказа в управлении.</li>
-            <li>Внутренние аудиты ИБ выявили слабые места в филиалах.</li>
-          </ul>
-        </section>
-        <section className="np-kb-block np-kb-add">
-          <h3>Что стоит добавить</h3>
-          <ul className="np-sum-list">
-            <li>Полная оргструктура и ключевые сотрудники.</li>
-            <li>Финансовая отчётность и список контрагентов.</li>
-            <li>Карта ИТ-систем и зависимостей.</li>
-          </ul>
-        </section>
-      </div>
+      <section className="np-kb-block np-kb-add">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <h3 style={{ margin: 0 }}>Как улучшить профиль</h3>
+          <button className="np-fact-link" onClick={() => setImproveOpen(true)}>Смотреть все →</button>
+        </div>
+        <ul className="np-sum-list">
+          {IMPROVE_ITEMS.slice(0, 3).map((it, i) => (
+            <li key={i}><strong>{it.title}</strong> — {it.why} <span className="np-muted">(+{it.gain}%)</span></li>
+          ))}
+        </ul>
+      </section>
 
+      {improveOpen && (
+        <ImproveDrawer
+          onClose={() => setImproveOpen(false)}
+          onTransfer={() => {
+            setImproveOpen(false);
+            if (onOpenChat) onOpenChat("Хочу передать новые знания в профиль компании");
+            else setToast("Откройте чат ассистента");
+          }}
+          toast={setToast}
+        />
+      )}
       {toast && <KbToast message={toast} onDone={() => setToast(null)} />}
     </>
   );
@@ -470,7 +571,7 @@ function PlaceholderTab({ title, text }: { title: string; text: string }) {
   );
 }
 
-export default function KnowledgeBase() {
+export default function KnowledgeBase({ onOpenChat }: { onOpenChat?: (q: string) => void }) {
   const [tab, setTab] = useState<"profile" | "docs" | "method">("profile");
   return (
     <div className="np-kb">
@@ -483,7 +584,7 @@ export default function KnowledgeBase() {
         </div>
       </header>
 
-      {tab === "profile" && <ProfileTab />}
+      {tab === "profile" && <ProfileTab onOpenChat={onOpenChat} />}
       {tab === "docs" && <PlaceholderTab title="Документы компании" text="Здесь будут категории документов: индикатор зрелости, стандарты, оргструктура, финансовое состояние, аудиты и проверки, прочее." />}
       {tab === "method" && <PlaceholderTab title="Методология" text="Здесь будет описание методологии: политики, методики, регламенты и рекомендации, которыми пользуется Норм." />}
     </div>

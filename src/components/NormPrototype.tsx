@@ -942,7 +942,7 @@ export default function NormPrototype() {
 
       <main className="np-main">
         {activeNav === "kb" ? (
-          <KnowledgeBase />
+          <KnowledgeBase onOpenChat={(q) => openWith(q)} />
         ) : (
         <>
         <h1 className="np-hello">
