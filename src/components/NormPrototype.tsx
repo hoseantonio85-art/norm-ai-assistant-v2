@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "../styles/norm-prototype.css";
+import KnowledgeBase from "./KnowledgeBase";
 
 type Role = "user" | "assistant" | "status" | "file" | "summary" | "actions";
 
@@ -96,7 +97,7 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
 }
 
 const NAV = [
-  { id: "home", label: "Главная", icon: "home", active: true },
+  { id: "home", label: "Главная", icon: "home" },
   { id: "events", label: "События", icon: "bolt" },
   { id: "risks", label: "Риски", icon: "shield" },
   { id: "measures", label: "Меры", icon: "target" },
@@ -891,6 +892,7 @@ export default function NormPrototype() {
   const [modalQuery, setModalQuery] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [activeNav, setActiveNav] = useState<string>("home");
 
   const openWith = (q: string | null) => { setModalQuery(q); setModalOpen(true); };
   const close = () => { setModalOpen(false); setModalQuery(null); };
@@ -914,7 +916,11 @@ export default function NormPrototype() {
 
         <nav className="np-nav">
           {NAV.map((n) => (
-            <button key={n.id} className={`np-nav-item ${n.active ? "active" : ""}`}>
+            <button
+              key={n.id}
+              className={`np-nav-item ${activeNav === n.id ? "active" : ""}`}
+              onClick={() => setActiveNav(n.id)}
+            >
               <Icon name={n.icon} size={18} />
               <span>{n.label}</span>
             </button>
@@ -935,6 +941,10 @@ export default function NormPrototype() {
       </aside>
 
       <main className="np-main">
+        {activeNav === "kb" ? (
+          <KnowledgeBase />
+        ) : (
+        <>
         <h1 className="np-hello">
           — Привет, Кирилл! Меня зовут <span className="np-grad">Норм.</span><br/>
           Я твой <span className="np-grad">виртуальный помощник.</span>
@@ -998,6 +1008,8 @@ export default function NormPrototype() {
             ))}
           </div>
         </section>
+        </>
+        )}
       </main>
 
       {modalOpen && (
