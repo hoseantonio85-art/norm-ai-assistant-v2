@@ -38,7 +38,6 @@ interface Area {
   influence?: { label: string; value: number }[];
 }
 
-const AREAS_INITIAL: Area[] = [
 const mk = (
   id: string,
   title: string,
