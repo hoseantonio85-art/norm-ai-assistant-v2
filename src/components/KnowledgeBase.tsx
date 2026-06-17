@@ -372,23 +372,48 @@ function AreaPage({
 
           <section className="np-area-section">
             <div className="np-area-section-head">
-              <h3>Ключевые знания</h3>
-              <span className="np-muted">{area.facts.length}</span>
+              <h3>{area.sections ? "Разделы знания" : "Ключевые знания"}</h3>
+              <span className="np-muted">{area.sections ? area.sections.length : area.facts.length}</span>
             </div>
+            {area.sections ? (
+              <div className="np-section-groups">
+                {area.sections.map((g, gi) => (
+                  <div key={gi} className="np-section-group">
+                    <div className="np-section-group-title">{g.title}</div>
+                    <ul className="np-fact-list">
+                      {g.items.map((it, ii) => (
+                        <li key={ii} className="np-fact">
+                          <div className="np-fact-row">
+                            <div className="np-fact-text">
+                              <span className="np-fact-label">{it.label}:</span> {it.value}
+                            </div>
+                            <button className="np-icon-btn" onClick={() => toast("Редактирование будет добавлено позже.")} aria-label="Меню">⋯</button>
+                          </div>
+                          <div className="np-fact-meta">
+                            <span className="np-source-badge">📄 1 источник</span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <ul className="np-fact-list">
               {area.facts.map((f, i) => (
                 <li key={i} className="np-fact">
                   <div className="np-fact-row">
                     <div className="np-fact-text">{f.text}</div>
-                    <button className="np-icon-btn" onClick={() => toast("Действия со знанием будут добавлены позже")} aria-label="Меню">⋯</button>
+                    <button className="np-icon-btn" onClick={() => toast("Редактирование будет добавлено позже.")} aria-label="Меню">⋯</button>
                   </div>
                   <div className="np-fact-meta">
-                    <span className="np-source-badge" onClick={() => toast("Переход к источнику будет добавлен позже")}>📄 {f.source}</span>
-                    <span>· обновлено {f.date}</span>
+                    <span className="np-source-badge" onClick={() => toast("Переход к источнику будет добавлен позже")}>📄 1 источник</span>
+                    {f.date !== "—" && <span>· обновлено {f.date}</span>}
                   </div>
                 </li>
               ))}
             </ul>
+            )}
           </section>
 
           <section className="np-area-section">
@@ -410,32 +435,35 @@ function AreaPage({
             <h4>Связь с рисками</h4>
             <div className="np-area-side-row">
               <span>Рисков</span>
-              <strong>{area.risks.length}</strong>
+              <strong>{area.riskCount ?? area.risks.length}</strong>
             </div>
-            <div className="np-area-side-meta">↑ +1 за месяц</div>
+            <div className="np-area-side-meta">↑ {area.riskDelta ?? "+1 за месяц"}</div>
           </section>
 
           <section className="np-area-side-card">
             <h4>Влияние на анализ</h4>
-            <div className="np-area-side-row"><span>Оценка рисков</span><strong>10</strong></div>
-            <div className="np-area-side-row"><span>AI рекомендации</span><strong>65</strong></div>
+            {(area.influence ?? [{ label: "Оценка рисков", value: 10 }, { label: "AI-рекомендации", value: 65 }]).map((it, i) => (
+              <div key={i} className="np-area-side-row"><span>{it.label}</span><strong>{it.value}</strong></div>
+            ))}
           </section>
 
           <section className="np-area-side-card np-area-improve">
             <h4>Улучшить знания</h4>
             <ul className="np-area-improve-list">
               {area.gaps.slice(0, 4).map((g, i) => (
-                <li key={i} onClick={() => toast("Можно добавить через чат Норма")}>{g}</li>
+                <li key={i} onClick={() => toast("Можно добавить через чат Норма.")}>{g}</li>
               ))}
             </ul>
-            <button className="np-btn" style={{ marginTop: 10 }} onClick={onAddFact}>+ Добавить знание</button>
           </section>
         </aside>
       </div>
 
       <button
         className="np-area-fab"
-        onClick={() => onOpenChat && onOpenChat(`Хочу дополнить знания в разделе ${area.title}`)}
+        onClick={() => {
+          if (onOpenChat) onOpenChat(`Хочу дополнить знания в разделе ${area.title}`);
+          else toast("Сценарий дополнения знаний будет реализован через чат Норма.");
+        }}
       >
         ✨ Дополнить знания
       </button>
@@ -540,11 +568,16 @@ function ProfileTab({ onOpenChat }: { onOpenChat?: (q: string) => void }) {
         <section className="np-kb-summary np-kb-summary-solo">
           <div className="np-kb-summary-head">
             <div className="np-kb-summary-eyebrow">Как Норм понимает компанию</div>
-            <h3>ООО «СамИздат Инкорпорейтед» — разработчик AI-рекомендательных продуктов</h3>
+            <h3>Аналитический профиль компании для оценки рисков</h3>
             <p>
-              Я уверенно понимаю профиль компании и её основные продукты. Хорошо ориентируюсь в
-              аудитах и инфраструктуре, но мало знаю про финансы, контрагентов и полную
-              оргструктуру. С этим могу заметно точнее работать с рисками.
+              Я собираю аналитический профиль компании из внутренних документов, открытых
+              источников и знаний, которые ты передаёшь в чате. Такой профиль помогает не просто
+              хранить факты, а понимать, где у компании могут возникать операционные,
+              технологические, финансовые и регуляторные риски.
+            </p>
+            <p className="np-kb-summary-extra">
+              Сейчас лучше всего покрыты общая информация, продукты и регуляторные сигналы.
+              Слабее всего — собственники, финансы и контрагенты.
             </p>
           </div>
         </section>
@@ -552,8 +585,8 @@ function ProfileTab({ onOpenChat }: { onOpenChat?: (q: string) => void }) {
           <Ring percent={INDEX_PERCENT} size={88} stroke={8} />
           <div className="np-index-widget-text">
             <div className="np-index-widget-title">Индекс знания</div>
-            <div className="np-index-widget-sub">Показывает, насколько хорошо Норм понимает компанию</div>
-            <div className="np-index-widget-meta">+12% за месяц · 3 области можно улучшить</div>
+            <div className="np-index-widget-sub">Показывает, насколько полно Норм понимает компанию для анализа рисков.</div>
+            <div className="np-index-widget-meta">3 области можно улучшить</div>
           </div>
         </button>
       </div>
@@ -586,25 +619,13 @@ function ProfileTab({ onOpenChat }: { onOpenChat?: (q: string) => void }) {
         })}
       </section>
 
-      <section className="np-kb-block np-kb-add">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-          <h3 style={{ margin: 0 }}>Как улучшить профиль</h3>
-          <button className="np-fact-link" onClick={() => setImproveOpen(true)}>Смотреть все →</button>
-        </div>
-        <ul className="np-sum-list">
-          {IMPROVE_ITEMS.slice(0, 3).map((it, i) => (
-            <li key={i}><strong>{it.title}</strong> — {it.why} <span className="np-muted">(+{it.gain}%)</span></li>
-          ))}
-        </ul>
-      </section>
-
       {improveOpen && (
         <ImproveDrawer
           onClose={() => setImproveOpen(false)}
           onTransfer={() => {
             setImproveOpen(false);
             if (onOpenChat) onOpenChat("Хочу передать новые знания в профиль компании");
-            else setToast("Откройте чат ассистента");
+            else setToast("Сценарий добавления знаний будет реализован через чат Норма.");
           }}
           toast={setToast}
         />
