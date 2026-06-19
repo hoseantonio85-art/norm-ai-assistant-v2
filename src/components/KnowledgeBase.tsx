@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import profileData from "@/data/company_profile_full.json";
+import profileData from "../data/company_profile_full.json";
 import type {
   Area,
   Attribute,
@@ -9,7 +9,7 @@ import type {
   KnowledgeItem,
   Source,
   Tag,
-} from "@/types/profile";
+} from "../types/profile";
 
 const DATA = profileData as unknown as CompanyProfile;
 const AREAS: Area[] = DATA.profile.areas;
