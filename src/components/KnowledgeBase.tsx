@@ -581,7 +581,7 @@ export default function KnowledgeBase({
   const hideChrome = tab === "profile" && activeAreaId !== null;
 
   return (
-    <div className={`np-kb ${hideChrome ? "np-kb--area-open" : ""}`}>
+    <div className={`np-kb ${hideChrome ? "np-kb--area-open" : "np-page-container"}`}>
       {!hideChrome && (
       <div className="np-kb-pageheader">
         <h1>База знаний Норма AI</h1>
