@@ -145,6 +145,7 @@ interface FocusPoint {
   primaryAction: string;
   secondaryActions: string[];
   chatQuestion: string;
+  signalDate: string;
 }
 
 const FOCUS_POINTS: FocusPoint[] = [
