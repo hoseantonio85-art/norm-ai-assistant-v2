@@ -469,6 +469,7 @@ function KbToast({ message, onDone }: { message: string; onDone: () => void }) {
 
 function ProfileTab({
   areas, totalKnowledge, onOpenChat, onOpenSources, activeId, setActiveId,
+  filter, setFilter, searchQuery,
 }: {
   areas: UniversalArea[];
   totalKnowledge: number;
@@ -477,8 +478,10 @@ function ProfileTab({
   setToast: (s: string | null) => void;
   activeId: string | null;
   setActiveId: (id: string | null) => void;
+  filter: "all" | "lowKnowledge" | "needsUpdate";
+  setFilter: (f: "all" | "lowKnowledge" | "needsUpdate") => void;
+  searchQuery: string;
 }) {
-  const [filter, setFilter] = useState<"all" | "lowKnowledge" | "needsUpdate">("all");
   const active = activeId ? areas.find((a) => a.id === activeId) ?? null : null;
 
   if (active) {
@@ -494,45 +497,34 @@ function ProfileTab({
     );
   }
 
-  const lowCount = areas.filter((a) => coverageForArea(a.id)?.needsKnowledge).length;
-  const updCount = areas.filter((a) => coverageForArea(a.id)?.needsUpdate).length;
+  const q = searchQuery.trim().toLowerCase();
   const filtered = areas.filter((a) => {
     const c = coverageForArea(a.id);
-    if (filter === "lowKnowledge") return !!c?.needsKnowledge;
-    if (filter === "needsUpdate") return !!c?.needsUpdate;
-    return true;
+    if (filter === "lowKnowledge" && !c?.needsKnowledge) return false;
+    if (filter === "needsUpdate" && !c?.needsUpdate) return false;
+    if (!q) return true;
+    const hay: string[] = [a.title, a.description || "", c?.status || ""];
+    for (const k of a.knowledge) {
+      hay.push(k.title);
+      for (const s of k.sources || []) hay.push(s.title || s.id);
+    }
+    return hay.some((s) => s.toLowerCase().includes(q));
   });
 
   return (
-    <>
-      <IndexWidgetHorizontal
-        totalKnowledge={totalKnowledge}
-      />
-
-      <div className="np-kb-filters">
-        <div className="np-kb-filters-title">Области профиля</div>
-        <div className="np-kb-filters-row">
-          <button className={`np-kb-filter ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
-            Все · {areas.length}
-          </button>
-          <button className={`np-kb-filter ${filter === "lowKnowledge" ? "active" : ""}`} onClick={() => setFilter("lowKnowledge")}>
-            Мало знаний · {lowCount}
-          </button>
-          <button className={`np-kb-filter ${filter === "needsUpdate" ? "active" : ""}`} onClick={() => setFilter("needsUpdate")}>
-            Нужно обновить · {updCount}
-          </button>
-        </div>
-      </div>
-
-      <section className="np-kb-grid">
+    <section className="np-kb-profile-content">
+      <IndexWidgetHorizontal totalKnowledge={totalKnowledge} />
+      <div className="np-kb-area-grid np-kb-grid">
         {filtered.map((a) => (
           <AreaCard key={a.id} area={a} onOpen={() => setActiveId(a.id)} />
         ))}
         {filtered.length === 0 && (
-          <div className="np-kb-empty">В этой группе пока нет областей</div>
+          <div className="np-kb-empty">
+            {q ? "Ничего не найдено. Попробуйте изменить запрос." : "В этой группе пока нет областей"}
+          </div>
         )}
-      </section>
-    </>
+      </div>
+    </section>
   );
 }
 
