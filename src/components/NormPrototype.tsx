@@ -1216,23 +1216,47 @@ function FocusPointModal({
         <div className="np-focus-modal-body">
           <div className="np-focus-col np-focus-col--main">
             <section className="np-focus-island">
-              <h4 className="np-focus-island-title">Что я заметил</h4>
-              <p className="np-focus-intro-lead">{point.intro}</p>
-              <p className="np-focus-island-text">{point.noticed}</p>
+              <h4 className="np-focus-island-title">Что происходит</h4>
+              <p className="np-focus-island-text">{point.situation}</p>
             </section>
             <section className="np-focus-island">
-              <h4 className="np-focus-island-title">Почему это может повлиять на компанию</h4>
-              <p className="np-focus-island-text">{point.whyMatters}</p>
+              <h4 className="np-focus-island-title">Почему это происходит</h4>
+              <p className="np-focus-island-text">{point.cause}</p>
             </section>
             <section className="np-focus-island">
-              <h4 className="np-focus-island-title">Рекомендации</h4>
-              <div className="np-focus-reco">
-                <div className="np-focus-reco-label">Чего пока не хватает</div>
-                <p className="np-focus-island-text">{point.needMore}</p>
+              <h4 className="np-focus-island-title">Что это значит для бизнеса</h4>
+              <p className="np-focus-island-text">{point.businessImpact}</p>
+            </section>
+            <section className="np-focus-island">
+              <h4 className="np-focus-island-title">Что рекомендую</h4>
+              <ol className="np-focus-recommendations">
+                {point.recommendations.map((r, i) => (
+                  <li key={i} className="np-focus-recommendation">
+                    <span className="np-focus-recommendation-stage">{r.stage}</span>
+                    <p className="np-focus-recommendation-action">{r.action}</p>
+                    <div className="np-focus-recommendation-effect">
+                      <div className="np-focus-recommendation-effect-label">
+                        <span aria-hidden className="np-focus-recommendation-effect-icon">↗</span>
+                        Ожидаемый эффект
+                      </div>
+                      <p>{r.expectedEffect}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <div className="np-focus-checkpoint">
+                <div className="np-focus-checkpoint-label">Контрольная точка</div>
+                <p className="np-focus-island-text">{point.checkpoint.condition}</p>
+                <div className="np-focus-checkpoint-label">Если условие выполнено</div>
+                <p className="np-focus-island-text">{point.checkpoint.response}</p>
               </div>
-              <div className="np-focus-reco np-focus-reco--divider">
-                <div className="np-focus-reco-label">Что я смогу сделать</div>
-                <p className="np-focus-island-text">{point.canDo}</p>
+            </section>
+            <section className="np-focus-island">
+              <h4 className="np-focus-island-title">Что ещё нужно уточнить</h4>
+              <p className="np-focus-island-text">{point.clarification}</p>
+              <div className="np-focus-clarification-value">
+                <div className="np-focus-checkpoint-label">Зачем это нужно</div>
+                <p className="np-focus-island-text">{point.clarificationValue}</p>
               </div>
             </section>
             <section className="np-focus-island">
