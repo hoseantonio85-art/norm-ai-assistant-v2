@@ -22,6 +22,32 @@
       { "text": "Не определён конечный бенефициар владельца 51%.", "relatedKnowledgeIds": ["owners.founders"] },
       { "text": "Неизвестно распределение владения ключевыми процессами и подразделениями.", "relatedKnowledgeIds": ["structure.key_managers"] },
       { "text": "Часть финансовых и кадровых данных относится к 2020–2023 годам и требует актуализации.", "relatedKnowledgeIds": ["general.employee_count", "finance.main_metrics"] }
+    ],
+    "importantSignals": [
+      {
+        "id": "industry-okved-conflict",
+        "type": "conflict",
+        "title": "Есть расхождение",
+        "text": "Основной ОКВЭД относится к предоставлению мест для временного проживания, а отрасль компании указана как розничная торговля.",
+        "riskEffect": "корректность применения отраслевых требований, налоговый и лицензионный контекст",
+        "evidenceKnowledgeIds": ["general.primary_activity", "general.company_description"]
+      },
+      {
+        "id": "owner-access-limited",
+        "type": "warning",
+        "title": "Данные ограничены",
+        "text": "ФНС ограничивает сведения об учредителе, владеющем 51% компании. Норм не может установить конечного контролирующего собственника.",
+        "riskEffect": "проверка связанных сторон, конфликтов интересов и санкционных ограничений",
+        "evidenceKnowledgeIds": ["owners.founders"]
+      },
+      {
+        "id": "employee-count-stale",
+        "type": "stale",
+        "title": "Данные могут быть неактуальны",
+        "text": "Последняя известная численность — 1 323 сотрудника по данным за 2020 год.",
+        "riskEffect": "оценка текущего масштаба операций и зависимости от персонала",
+        "evidenceKnowledgeIds": ["general.employee_count"]
+      }
     ]
   },
   "areas": {
@@ -46,6 +72,24 @@
         { "text": "Актуальная численность сотрудников после 2020 года.", "relatedKnowledgeIds": ["general.employee_count"] },
         { "text": "Стратегические цели и планы развития компании." },
         { "text": "Ключевые географические площадки." }
+      ],
+      "importantSignals": [
+        {
+          "id": "industry-okved-conflict",
+          "type": "conflict",
+          "title": "Есть расхождение",
+          "text": "Основной ОКВЭД относится к предоставлению мест для временного проживания, а отрасль компании указана как розничная торговля.",
+          "riskEffect": "корректность применения отраслевых требований, налоговый и лицензионный контекст",
+          "evidenceKnowledgeIds": ["general.primary_activity", "general.company_description"]
+        },
+        {
+          "id": "employee-count-stale",
+          "type": "stale",
+          "title": "Данные могут быть неактуальны",
+          "text": "Последняя известная численность — 1 323 сотрудника по данным за 2020 год.",
+          "riskEffect": "оценка текущего масштаба операций и зависимости от персонала",
+          "evidenceKnowledgeIds": ["general.employee_count"]
+        }
       ]
     },
     "structure_management": {
@@ -86,6 +130,16 @@
       "blindSpots": [
         { "text": "Не определён конечный бенефициар владельца 51%.", "relatedKnowledgeIds": ["owners.founders"] },
         { "text": "Неизвестны все компании, связанные с контролирующим собственником." }
+      ],
+      "importantSignals": [
+        {
+          "id": "owner-access-limited",
+          "type": "warning",
+          "title": "Данные ограничены",
+          "text": "ФНС ограничивает сведения об учредителе, владеющем 51% компании. Норм не может установить конечного контролирующего собственника.",
+          "riskEffect": "проверка связанных сторон, конфликтов интересов и санкционных ограничений",
+          "evidenceKnowledgeIds": ["owners.founders"]
+        }
       ]
     }
   }

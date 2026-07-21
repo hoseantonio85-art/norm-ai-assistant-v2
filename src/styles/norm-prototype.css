@@ -1239,6 +1239,24 @@
 .np-drawer-risk-area { font-weight: 600; color: #0f172a; font-size: 13px; margin-bottom: 2px; }
 .np-drawer-risk-why { font-size: 13px; color: #475569; line-height: 1.45; }
 
+.np-signals { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.np-signal {
+  position: relative;
+  padding: 10px 12px 10px 14px;
+  border-radius: 10px;
+  border-left: 4px solid transparent;
+  background: #f8fafc;
+}
+.np-signal-title { font-size: 12px; font-weight: 700; letter-spacing: 0.2px; margin-bottom: 4px; }
+.np-signal-text { font-size: 13px; line-height: 1.5; color: #1f2937; }
+.np-signal-effect { margin-top: 6px; font-size: 12px; color: #475569; line-height: 1.45; }
+.np-signal--conflict { background: #fdecea; border-left-color: #e26a5a; }
+.np-signal--conflict .np-signal-title { color: #b23a2a; }
+.np-signal--warning { background: #fff4e5; border-left-color: #f0932b; }
+.np-signal--warning .np-signal-title { color: #b46a10; }
+.np-signal--stale { background: #fdf5e2; border-left-color: #d4a53a; }
+.np-signal--stale .np-signal-title { color: #8a6a1c; }
+
 /* ==========================================================
    Profile workspace — nav rail + area workspace (open area view)
    ========================================================== */

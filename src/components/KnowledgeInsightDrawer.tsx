@@ -27,6 +27,22 @@ export function KnowledgeInsightDrawer({
           <button className="np-icon-btn" onClick={onClose} aria-label="Закрыть">✕</button>
         </div>
         <div className="np-drawer-body">
+          {insight?.importantSignals && insight.importantSignals.length > 0 && (
+            <section className="np-drawer-section">
+              <h4>Важные сигналы</h4>
+              <ul className="np-signals">
+                {insight.importantSignals.slice(0, 3).map((s) => (
+                  <li key={s.id} className={`np-signal np-signal--${s.type}`}>
+                    <div className="np-signal-title">{s.title}</div>
+                    <div className="np-signal-text">{s.text}</div>
+                    {s.riskEffect && (
+                      <div className="np-signal-effect">Может повлиять: {s.riskEffect}</div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {insight?.observations && insight.observations.length > 0 && (
             <section className="np-drawer-section">
               <h4>Что я вижу</h4>
