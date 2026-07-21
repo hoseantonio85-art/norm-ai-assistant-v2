@@ -134,6 +134,7 @@ interface FocusPoint {
   checkpoint: FocusCheckpoint;
   clarification: string;
   clarificationValue: string;
+  clarificationChatQuestion: string;
   related: string[];
   relatedRisk: {
     id: string;
