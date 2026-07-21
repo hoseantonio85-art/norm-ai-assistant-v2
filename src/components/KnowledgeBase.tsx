@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
 import profileData from "../data/company_profile_full.json";
 import coverageData from "../data/profile_coverage.json";
 import { UniversalValueRenderer } from "./UniversalValueRenderer";
-import { SourceTags, pickPrimarySource } from "./SourceTags";
+import { SourceTags } from "./SourceTags";
 import { KnowledgeSourcesDrawer } from "./KnowledgeSourcesDrawer";
 import { normalizeProfile } from "../adapters/profileKnowledgeAdapter";
 import type { UniversalArea } from "../adapters/profileKnowledgeAdapter";
