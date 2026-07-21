@@ -1020,6 +1020,8 @@ export default function NormPrototype() {
   const [modalQuery, setModalQuery] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [focusIdx, setFocusIdx] = useState<number | null>(null);
+  const [focusSourceIdx, setFocusSourceIdx] = useState<number | null>(null);
   const [activeNav, setActiveNav] = useState<string>("home");
   const [profileAreaOpen, setProfileAreaOpen] = useState(false);
   const [knowledgeBaseRootRequest, setKnowledgeBaseRootRequest] = useState(0);
@@ -1208,6 +1210,21 @@ export default function NormPrototype() {
           initialQuery={modalQuery}
           onClose={close}
           onToast={(m) => setToast(m)}
+        />
+      )}
+      {focusIdx !== null && (
+        <FocusPointModal
+          point={FOCUS_POINTS[focusIdx]}
+          activeSourceIdx={focusSourceIdx}
+          onOpenSource={(i) => setFocusSourceIdx(i)}
+          onCloseSource={() => setFocusSourceIdx(null)}
+          onClose={() => { setFocusSourceIdx(null); setFocusIdx(null); }}
+          onToast={(m) => setToast(m)}
+          onDiscuss={(q) => {
+            setFocusSourceIdx(null);
+            setFocusIdx(null);
+            openWith(q);
+          }}
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
