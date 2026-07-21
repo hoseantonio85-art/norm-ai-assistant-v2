@@ -664,6 +664,11 @@ export default function KnowledgeBase({
             понимать их причины и моделировать возможные последствия.
           </p>
         </div>
+        {tab === "profile" && (
+          <section className="np-kb-index-group">
+            <IndexWidgetHorizontal totalKnowledge={totalKnowledge} />
+          </section>
+        )}
         <div className="np-kb-controls">
           <div className="np-kb-toolbar">
             <div className="np-kb-toolbar-left">
