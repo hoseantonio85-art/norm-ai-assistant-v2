@@ -1,24 +1,20 @@
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import profileData from "../data/company_profile_full.json";
-import universalDemo from "../data/universal_knowledge_demo.json";
 import coverageData from "../data/profile_coverage.json";
 import { UniversalValueRenderer } from "./UniversalValueRenderer";
-import type { UniversalKnowledgeDemo } from "../types/universalKnowledge";
+import { SourceTags } from "./SourceTags";
+import { KnowledgeSourcesDrawer } from "./KnowledgeSourcesDrawer";
+import { normalizeProfile } from "../adapters/profileKnowledgeAdapter";
+import type { UniversalArea } from "../adapters/profileKnowledgeAdapter";
 import type {
-  Area,
-  Attribute,
-  CompanyProfile,
-  Knowledge,
-  KnowledgeAlert,
-  KnowledgeItem,
-  Source,
-  Tag,
-} from "../types/profile";
+  UniversalKnowledge,
+  KnowledgeSource,
+  KnowledgeSourceReference,
+} from "../types/universalKnowledge";
+import type { CompanyProfile } from "../types/profile";
 
 const DATA = profileData as unknown as CompanyProfile;
-const AREAS: Area[] = DATA.profile.areas;
-const UNIVERSAL_DEMO = universalDemo as unknown as UniversalKnowledgeDemo;
+const AREAS_RAW = DATA.profile.areas;
 
 /* ---------- coverage data types ---------- */
 
@@ -67,404 +63,66 @@ const MONTHS_RU = [
   "января", "февраля", "марта", "апреля", "мая", "июня",
   "июля", "августа", "сентября", "октября", "ноября", "декабря",
 ];
-
 function formatRuDate(iso: string | undefined | null): string {
-  if (!iso) return "—";
-  // ISO date or datetime
+  if (!iso) return "";
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  if (!m) return iso;
-  const y = m[1];
+  if (!m) return String(iso);
   const mo = parseInt(m[2], 10) - 1;
-  const d = parseInt(m[3], 10);
   if (mo < 0 || mo > 11) return iso;
-  return `${d} ${MONTHS_RU[mo]} ${y}`;
+  return `${parseInt(m[3], 10)} ${MONTHS_RU[mo]} ${m[1]}`;
 }
 
-function formatAttrValue(attr: Attribute): string {
-  const v = attr.value;
-  if (v === undefined || v === null || v === "") return "—";
-  if (Array.isArray(v)) return v.join(", ");
-  if (attr.value_type === "date") return formatRuDate(String(v));
-  return String(v);
+function tagToneForFreshness(code: string | null | undefined): "ok" | "warn" | "low" | "neutral" {
+  if (code === "current") return "ok";
+  if (code === "outdated" || code === "update_required") return "warn";
+  if (code === "missing" || code === "expired") return "low";
+  return "neutral";
 }
 
-function isEmptyValue(v: unknown): boolean {
-  if (v === undefined || v === null) return true;
-  if (typeof v === "string" && v.trim() === "") return true;
-  if (Array.isArray(v) && v.length === 0) return true;
-  return false;
+/* ---------- source-override state ----------
+ * Local edits/deletes performed via the sources drawer are held
+ * per-knowledge and layered over the normalized data. */
+
+interface SourceOverride {
+  sources: KnowledgeSource[];
+  evidence: KnowledgeSourceReference[];
+}
+type Overrides = Record<string, SourceOverride>;
+
+function applyOverrides(k: UniversalKnowledge, ov?: SourceOverride): UniversalKnowledge {
+  if (!ov) return k;
+  return {
+    ...k,
+    sources: ov.sources,
+    metadata: { ...(k.metadata || {}), sourceEvidence: ov.evidence },
+  };
 }
 
-function freshnessToneClass(code: string): string {
-  switch (code) {
-    case "current": return "np-fresh np-fresh-current";
-    case "outdated":
-    case "update_required": return "np-fresh np-fresh-outdated";
-    case "missing": return "np-fresh np-fresh-missing";
-    default: return "np-fresh";
-  }
-}
-
-function tagToneClass(tone?: string): string {
-  return `np-tag np-tag-${tone || "neutral"}`;
-}
-
-function alertSeverityClass(sev: string): string {
-  return `np-alert np-alert-${sev || "info"}`;
-}
-
-/* ---------- shared sub-renderers ---------- */
-
-function Tags({ tags }: { tags: Tag[] }) {
-  if (!tags || tags.length === 0) return null;
-  return (
-    <div className="np-tags">
-      {tags.map((t) => (
-        <span key={t.code} className={tagToneClass(t.tone)}>{t.label}</span>
-      ))}
-    </div>
-  );
-}
-
-function AttributesList({
-  attributes, dense = false,
-}: { attributes: Attribute[]; dense?: boolean }) {
-  const visible = attributes.filter((a) => !isEmptyValue(a.value));
-  if (visible.length === 0) return null;
-  return (
-    <dl className={`np-attrs ${dense ? "np-attrs-dense" : ""}`}>
-      {visible.map((a) => {
-        const v = a.value;
-        return (
-          <div key={a.key} className="np-attr-row">
-            <dt>{a.label}</dt>
-            <dd>
-              {Array.isArray(v) ? (
-                <ul className="np-attr-list">
-                  {(v as string[]).map((x, i) => <li key={i}>{x}</li>)}
-                </ul>
-              ) : (
-                formatAttrValue(a)
-              )}
-            </dd>
-          </div>
-        );
-      })}
-    </dl>
-  );
-}
-
-function ItemLinks({ links }: { links?: { label: string; url: string }[] }) {
-  if (!links || links.length === 0) return null;
-  return (
-    <div className="np-item-links">
-      {links.map((l, i) => (
-        <a key={i} href={l.url} target="_blank" rel="noreferrer noopener">{l.label}</a>
-      ))}
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status?: KnowledgeItem["status"] }) {
-  if (!status) return null;
-  return <span className={tagToneClass(status.tone)}>{status.label}</span>;
-}
-
-function AlertBlock({
-  alerts, onAction,
-}: { alerts: KnowledgeAlert[]; onAction: (a: KnowledgeAlert) => void }) {
-  if (!alerts || alerts.length === 0) return null;
-  return (
-    <div className="np-alerts">
-      {alerts.map((a, i) => (
-        <div key={i} className={alertSeverityClass(a.severity)}>
-          <span className="np-alert-icon" aria-hidden>!</span>
-          <div className="np-alert-body">
-            <div className="np-alert-msg">{a.message}</div>
-            {a.action && (
-              <button className="np-btn np-btn-ghost np-alert-action" onClick={() => onAction(a)}>
-                {a.action.label}
-              </button>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SourceBadge({ s }: { s: Source }) {
-  return (
-    <span className="np-source-badge" title={s.dataset || s.document_name || ""}>
-      <span className="np-source-dot" aria-hidden>●</span>
-      {s.name}
-      {s.dataset ? <span className="np-source-extra"> · {s.dataset}</span> : null}
-      {!s.dataset && s.document_name ? <span className="np-source-extra"> · {s.document_name}</span> : null}
-    </span>
-  );
-}
-
-function KnowledgeFooter({ k }: { k: Knowledge }) {
-  return (
-    <footer className="np-k-foot">
-      <div className="np-k-foot-sources">
-        <span className="np-k-foot-label">Источники:</span>
-        {k.sources.map((s) => <SourceBadge key={s.id} s={s} />)}
-      </div>
-      <div className="np-k-foot-date">
-        Актуально на <strong>{formatRuDate(k.actual_at)}</strong>
-      </div>
-    </footer>
-  );
-}
-
-/* ---------- item body (recursive) ---------- */
-
-function ItemBody({ item, dense = false }: { item: KnowledgeItem; dense?: boolean }) {
-  return (
-    <div className="np-item-body">
-      {item.description && <p className="np-item-desc">{item.description}</p>}
-      <AttributesList attributes={item.attributes} dense={dense} />
-      <Tags tags={item.tags} />
-      <ItemLinks links={item.links} />
-      {item.children && item.children.length > 0 && (
-        <div className="np-item-children">
-          {item.children.map((c) => (
-            <div key={c.id} className="np-item-child">
-              <div className="np-item-child-head">
-                <strong>{c.title}</strong>
-                {!isEmptyValue(c.value) && <span className="np-item-child-value">{String(c.value)}</span>}
-                <StatusPill status={c.status} />
-              </div>
-              <ItemBody item={c} dense />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------- variants ---------- */
-
-function VariantDetails({ k }: { k: Knowledge }) {
-  return (
-    <div className="np-v-details">
-      {k.items.map((it) => (
-        <div key={it.id} className="np-v-details-item">
-          {k.items.length > 1 && (
-            <div className="np-item-title">{it.title}</div>
-          )}
-          <ItemBody item={it} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function VariantCollection({ k, initial = 5 }: { k: Knowledge; initial?: number }) {
-  const [open, setOpen] = useState(false);
-  const all = k.items;
-  const visible = open ? all : all.slice(0, initial);
-  return (
-    <div className="np-v-collection">
-      <div className="np-v-collection-list">
-        {visible.map((it) => (
-          <article key={it.id} className="np-collection-card">
-            <header className="np-collection-card-head">
-              <div>
-                <div className="np-item-title">{it.title}</div>
-                {!isEmptyValue(it.value) && <div className="np-item-value">{String(it.value)}</div>}
-              </div>
-              <StatusPill status={it.status} />
-            </header>
-            <ItemBody item={it} dense />
-          </article>
-        ))}
-      </div>
-      {all.length > initial && (
-        <button className="np-btn np-btn-ghost np-show-more" onClick={() => setOpen((o) => !o)}>
-          {open ? "Свернуть" : `Показать все (${all.length})`}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function VariantTable({ k }: { k: Knowledge }) {
-  // Render as a vertical list (no HTML tables per design system)
-  const pageSize = k.presentation.page_size || 10;
-  const [open, setOpen] = useState(false);
-  const visible = open ? k.items : k.items.slice(0, pageSize);
-  return (
-    <div className="np-v-collection">
-      <div className="np-v-collection-list">
-        {visible.map((it) => (
-          <article key={it.id} className="np-collection-card">
-            <header className="np-collection-card-head">
-              <div>
-                <div className="np-item-title">{it.title}</div>
-                {!isEmptyValue(it.value) && <div className="np-item-value">{String(it.value)}</div>}
-              </div>
-              <StatusPill status={it.status} />
-            </header>
-            <ItemBody item={it} dense />
-          </article>
-        ))}
-      </div>
-      {k.items.length > pageSize && (
-        <button className="np-btn np-btn-ghost np-show-more" onClick={() => setOpen((o) => !o)}>
-          {open ? "Свернуть" : `Показать все (${k.items.length})`}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function VariantNarrative({ k }: { k: Knowledge }) {
-  return (
-    <div className="np-v-narrative">
-      {k.items.map((it) => (
-        <div key={it.id} className="np-narrative-item">
-          {it.description && <p className="np-narrative-text">{it.description}</p>}
-          <AttributesList attributes={it.attributes} />
-          <Tags tags={it.tags} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function VariantMetric({ k }: { k: Knowledge }) {
-  return (
-    <div className="np-v-metrics">
-      {k.items.map((it) => (
-        <div key={it.id} className="np-metric-card">
-          <div className="np-metric-label">{it.title}</div>
-          {!isEmptyValue(it.value) && <div className="np-metric-value">{String(it.value)}</div>}
-          <AttributesList attributes={it.attributes} dense />
-          {it.description && <p className="np-item-desc">{it.description}</p>}
-          <Tags tags={it.tags} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function VariantStatistics({ k }: { k: Knowledge }) {
-  return (
-    <div className="np-v-stats">
-      {k.items.map((it) => (
-        <section key={it.id} className="np-stats-block">
-          <h4>{it.title}</h4>
-          <ItemBody item={it} />
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function VariantMapList({ k }: { k: Knowledge }) {
-  return (
-    <div className="np-v-maplist">
-      {k.items.map((it) => (
-        <section key={it.id} className="np-maplist-block">
-          <header className="np-maplist-head">
-            <strong>{it.title}</strong>
-            {!isEmptyValue(it.value) && <span className="np-muted">{String(it.value)}</span>}
-          </header>
-          <ItemBody item={it} dense />
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function VariantTimeline({ k }: { k: Knowledge }) {
-  return (
-    <ol className="np-v-timeline">
-      {k.items.map((it) => (
-        <li key={it.id} className="np-timeline-item">
-          <div className="np-timeline-head">
-            <strong>{it.title}</strong>
-            {!isEmptyValue(it.value) && <span className="np-timeline-value">{String(it.value)}</span>}
-          </div>
-          {it.description && <p className="np-item-desc">{it.description}</p>}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function VariantPeriods({ k }: { k: Knowledge }) {
-  return (
-    <div className="np-v-periods">
-      {k.items.map((it) => (
-        <section key={it.id} className="np-period-block">
-          <header className="np-period-head">
-            <h4>{it.title}</h4>
-            <Tags tags={it.tags} />
-          </header>
-          <ItemBody item={it} />
-        </section>
-      ))}
-    </div>
-  );
-}
-
-function VariantRiskList({ k }: { k: Knowledge }) {
-  return (
-    <ul className="np-v-risks">
-      {k.items.map((it) => (
-        <li key={it.id} className="np-risk-item">
-          <div className="np-risk-head">
-            <strong>{it.title}</strong>
-            <StatusPill status={it.status} />
-          </div>
-          {it.description && <p className="np-item-desc">{it.description}</p>}
-          <Tags tags={it.tags} />
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function renderVariant(k: Knowledge) {
-  switch (k.presentation.variant) {
-    case "details": return <VariantDetails k={k} />;
-    case "collection": return <VariantCollection k={k} />;
-    case "table": return <VariantTable k={k} />;
-    case "narrative": return <VariantNarrative k={k} />;
-    case "metric":
-    case "metrics": return <VariantMetric k={k} />;
-    case "statistics": return <VariantStatistics k={k} />;
-    case "map_list": return <VariantMapList k={k} />;
-    case "timeline": return <VariantTimeline k={k} />;
-    case "periods": return <VariantPeriods k={k} />;
-    case "risk_list": return <VariantRiskList k={k} />;
-    default: return <VariantDetails k={k} />;
-  }
-}
-
-/* ---------- unified accordion shell ---------- */
+/* ---------- unified accordion ---------- */
 
 function KnowledgeAccordion({
-  title, tag, tagTone, summary, meta, defaultOpen = false, children,
+  k, defaultOpen, onOpenSources,
 }: {
-  title: string;
-  tag?: string;
-  tagTone?: "ok" | "warn" | "low" | "neutral";
-  summary?: string | null;
-  meta?: string | null;
+  k: UniversalKnowledge;
   defaultOpen?: boolean;
-  children: ReactNode;
+  onOpenSources: (k: UniversalKnowledge) => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(!!defaultOpen);
+  const freshness = k.metadata?.freshness;
+  const tag = freshness?.label || k.state.label;
+  const tone = tagToneForFreshness(freshness?.code);
   const tagClass =
-    tagTone === "ok" ? "np-tag np-tag-ok"
-    : tagTone === "warn" ? "np-tag np-tag-warning"
-    : tagTone === "low" ? "np-tag np-tag-danger"
+    tone === "ok" ? "np-tag np-tag-ok"
+    : tone === "warn" ? "np-tag np-tag-warning"
+    : tone === "low" ? "np-tag np-tag-danger"
     : "np-tag";
+
+  const actualAt = k.metadata?.actualAt
+    ? `Актуально на ${formatRuDate(k.metadata.actualAt)}`
+    : null;
+
+  const openSources = () => onOpenSources(k);
+
   return (
     <article className={`np-k-acc ${open ? "is-open" : ""}`}>
       <button
@@ -475,124 +133,55 @@ function KnowledgeAccordion({
       >
         <div className="np-k-acc-main">
           <div className="np-k-acc-titleline">
-            <span className="np-k-acc-title">{title}</span>
+            <span className="np-k-acc-title">{k.title}</span>
             {tag && <span className={tagClass}>{tag}</span>}
           </div>
-          {summary && <div className="np-k-acc-summary">{summary}</div>}
-          {meta && <div className="np-k-acc-meta">{meta}</div>}
+          {k.description && <div className="np-k-acc-summary">{k.description}</div>}
+          <div className="np-k-acc-meta">
+            <SourceTags
+              sources={k.sources || []}
+              evidence={k.metadata?.sourceEvidence || []}
+              actualAt={actualAt || undefined}
+              onOpen={openSources}
+            />
+          </div>
         </div>
         <span className={`np-k-acc-chevron ${open ? "is-open" : ""}`} aria-hidden>›</span>
       </button>
-      {open && <div className="np-k-acc-body">{children}</div>}
-    </article>
-  );
-}
-
-function tagToneForFreshness(code: string): "ok" | "warn" | "low" | "neutral" {
-  if (code === "current") return "ok";
-  if (code === "outdated" || code === "update_required") return "warn";
-  if (code === "missing") return "low";
-  return "neutral";
-}
-
-function LegacyKnowledgeAccordion({
-  k, defaultOpen, onAlert,
-}: { k: Knowledge; defaultOpen?: boolean; onAlert: (a: KnowledgeAlert, k: Knowledge) => void }) {
-  const sourceLine =
-    k.sources.length > 0
-      ? `${k.sources[0].name}${k.sources.length > 1 ? ` · ещё ${k.sources.length - 1}` : ""} · Актуально на ${formatRuDate(k.actual_at)}`
-      : `Актуально на ${formatRuDate(k.actual_at)}`;
-  return (
-    <KnowledgeAccordion
-      title={k.title}
-      tag={k.freshness.label}
-      tagTone={tagToneForFreshness(k.freshness.code)}
-      summary={k.summary}
-      meta={sourceLine}
-      defaultOpen={defaultOpen}
-    >
-      <div className="np-k-body">{renderVariant(k)}</div>
-      <AlertBlock alerts={k.alerts} onAction={(a) => onAlert(a, k)} />
-      <KnowledgeFooter k={k} />
-    </KnowledgeAccordion>
-  );
-}
-
-function UniversalKnowledgeAccordion({
-  k, defaultOpen,
-}: {
-  k: (typeof UNIVERSAL_DEMO.knowledge)[number];
-  defaultOpen?: boolean;
-}) {
-  const freshness = k.metadata?.freshness;
-  const tagLabel = freshness?.label || k.state.label;
-  const tagTone = tagToneForFreshness(freshness?.code || "");
-  const actualAt = k.metadata?.actualAt ? formatRuDate(k.metadata.actualAt) : "";
-  const firstSource = k.sources && k.sources[0];
-  const metaParts: string[] = [];
-  if (firstSource) {
-    metaParts.push(firstSource.name + (k.sources && k.sources.length > 1 ? ` · ещё ${k.sources.length - 1}` : ""));
-  }
-  if (actualAt) metaParts.push(`Актуально на ${actualAt}`);
-  return (
-    <KnowledgeAccordion
-      title={k.title}
-      tag={tagLabel}
-      tagTone={tagTone}
-      summary={k.description ?? null}
-      meta={metaParts.join(" · ") || null}
-      defaultOpen={defaultOpen}
-    >
-      <div className="np-k-body">
-        <UniversalValueRenderer node={k.content} parentTitle={k.title} />
-      </div>
-      {k.alerts && k.alerts.length > 0 && (
-        <div className="np-uv-alerts">
-          {k.alerts.map((a) => (
-            <div key={a.id} className={`np-uv-alert np-uv-alert--${a.severity}`}>{a.message}</div>
-          ))}
+      {open && (
+        <div className="np-k-acc-body">
+          <div className="np-k-body">
+            <UniversalValueRenderer node={k.content} parentTitle={k.title} />
+          </div>
+          {k.alerts && k.alerts.length > 0 && (
+            <div className="np-uv-alerts">
+              {k.alerts.map((a) => (
+                <div key={a.id} className={`np-uv-alert np-uv-alert--${a.severity}`}>
+                  {a.message}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
-      {(k.sources && k.sources.length > 0) || k.metadata?.actualAt ? (
-        <footer className="np-uv-footer">
-          {k.sources && k.sources.length > 0 && (
-            <div className="np-uv-foot-row">
-              <span className="np-uv-foot-label">Источники:</span>
-              <span className="np-uv-foot-val">
-                {k.sources.map((s) => (s.dataset ? `${s.name} · ${s.dataset}` : s.name)).join(", ")}
-              </span>
-            </div>
-          )}
-          {k.metadata?.actualAt && (
-            <div className="np-uv-foot-row">
-              <span className="np-uv-foot-label">Актуально на:</span>
-              <span className="np-uv-foot-val">{formatRuDate(k.metadata.actualAt)}</span>
-            </div>
-          )}
-        </footer>
-      ) : null}
-    </KnowledgeAccordion>
+    </article>
   );
 }
 
 /* ---------- area card / view ---------- */
 
-function uniqueSources(area: Area): Source[] {
-  const map = new Map<string, Source>();
-  for (const k of area.knowledge) for (const s of k.sources) map.set(s.id, s);
-  return Array.from(map.values());
+function uniqueSourceCount(area: UniversalArea): number {
+  const set = new Set<string>();
+  for (const k of area.knowledge) for (const s of k.sources || []) set.add(s.id);
+  return set.size;
 }
 
-function countAlerts(area: Area): number {
-  return area.knowledge.reduce((n, k) => n + (k.alerts?.length || 0), 0);
-}
-
-function AreaCard({ area, onOpen }: { area: Area; onOpen: () => void }) {
-  const sources = uniqueSources(area);
+function AreaCard({ area, onOpen }: { area: UniversalArea; onOpen: () => void }) {
   const cov = coverageForArea(area.id);
   const percent = cov?.percent ?? 0;
   const status = cov?.status ?? "";
   const tone = toneForPercent(percent);
+  const srcCount = uniqueSourceCount(area);
   return (
     <article
       className="np-kb-card np-kb-card-clickable"
@@ -610,7 +199,7 @@ function AreaCard({ area, onOpen }: { area: Area; onOpen: () => void }) {
       {area.description && <p className="np-kb-card-insight">{area.description}</p>}
       <div className="np-kb-card-foot">
         <span className="np-muted">
-          {area.knowledge.length} знаний · {sources.length} {sources.length === 1 ? "источник" : "источников"}
+          {area.knowledge.length} знаний · {srcCount} {srcCount === 1 ? "источник" : "источников"}
         </span>
       </div>
       <div className={`np-progress np-progress--sm np-progress--${tone}`}>
@@ -620,13 +209,63 @@ function AreaCard({ area, onOpen }: { area: Area; onOpen: () => void }) {
   );
 }
 
-function AreaView({
-  area, areas, onSelect, onBack, onAlert, onOpenChat, setToast,
+function LocalIndexBlock({
+  area, percent, tone, cov, onOpen,
 }: {
-  area: Area; areas: Area[]; onSelect: (id: string) => void; onBack: () => void;
-  onAlert: (a: KnowledgeAlert, k: Knowledge) => void;
+  area: UniversalArea; percent: number; tone: string;
+  cov: AreaCoverage | undefined; onOpen: () => void;
+}) {
+  return (
+    <button type="button" className="np-index-horizontal np-index-horizontal--local" onClick={onOpen}>
+      <div className="np-idxh-value">{percent}%</div>
+      <div className="np-idxh-text">
+        <div className="np-idxh-title">Знание области</div>
+        <div className="np-idxh-sub">
+          {cov?.status ?? ""} · {area.knowledge.length} {area.knowledge.length === 1 ? "знание" : "знаний"}
+        </div>
+      </div>
+      <div className="np-idxh-bar-wrap">
+        <div className={`np-progress np-progress--sm np-progress--${tone}`}>
+          <div className="np-progress-fill" style={{ width: `${percent}%` }} />
+        </div>
+      </div>
+      <span className="np-idxh-chev" aria-hidden>›</span>
+    </button>
+  );
+}
+
+function ImproveBlock({
+  cov, onRec,
+}: { cov: AreaCoverage | undefined; onRec: (r: CoverageRecommendation) => void }) {
+  return (
+    <div className="np-area-side-card np-area-improve">
+      <h4>Что стоит добавить</h4>
+      <ul className="np-area-improve-list">
+        {(cov?.recommendations ?? []).map((r) => (
+          <li key={r.id} onClick={() => onRec(r)} role="button" tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") onRec(r); }}>
+            <div className="np-improve-title">{r.title}</div>
+            <div className="np-improve-why">{r.description}</div>
+            <span className="np-improve-chev" aria-hidden>›</span>
+          </li>
+        ))}
+        {(!cov || cov.recommendations.length === 0) && (
+          <li className="np-muted" style={{ cursor: "default" }}>Пока нет предложений</li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
+function AreaView({
+  area, areas, onSelect, onBack, onOpenChat, onOpenSources,
+}: {
+  area: UniversalArea;
+  areas: UniversalArea[];
+  onSelect: (id: string) => void;
+  onBack: () => void;
   onOpenChat?: (q: string) => void;
-  setToast: (s: string | null) => void;
+  onOpenSources: (k: UniversalKnowledge) => void;
 }) {
   const cov = coverageForArea(area.id);
   const percent = cov?.percent ?? 0;
@@ -635,8 +274,11 @@ function AreaView({
 
   const handleRec = (r: CoverageRecommendation) => {
     if (onOpenChat) onOpenChat(r.chatPrompt);
-    else setToast(`${r.title}: ${r.description}`);
   };
+
+  const visibleKnowledge = area.knowledge.filter(
+    (k) => k.state.code !== "unknown" && k.state.code !== "not_applicable",
+  );
 
   return (
     <div className="np-area-page">
@@ -672,54 +314,24 @@ function AreaView({
         </aside>
 
         <div className="np-area-center">
-          <button
-            type="button"
-            className="np-index-horizontal np-index-horizontal--local"
-            onClick={() => setDrawerOpen(true)}
-          >
-            <div className="np-idxh-value">{percent}%</div>
-            <div className="np-idxh-text">
-              <div className="np-idxh-title">Знание области</div>
-              <div className="np-idxh-sub">
-                {cov?.status ?? ""} · {area.knowledge.length} карточек знаний
-              </div>
-            </div>
-            <div className="np-idxh-bar-wrap">
-              <div className={`np-progress np-progress--sm np-progress--${tone}`}>
-                <div className="np-progress-fill" style={{ width: `${percent}%` }} />
-              </div>
-            </div>
-            <span className="np-idxh-chev" aria-hidden>›</span>
-          </button>
-
           <div className="np-k-stack">
-            {area.id === UNIVERSAL_DEMO.areaId
-              ? UNIVERSAL_DEMO.knowledge.map((uk, i) => (
-                  <UniversalKnowledgeAccordion key={uk.id} k={uk} defaultOpen={i === 0} />
-                ))
-              : area.knowledge.map((k) => (
-                  <LegacyKnowledgeAccordion key={k.id} k={k} onAlert={onAlert} />
-                ))}
+            {visibleKnowledge.map((k, i) => (
+              <KnowledgeAccordion
+                key={k.id}
+                k={k}
+                defaultOpen={i === 0}
+                onOpenSources={onOpenSources}
+              />
+            ))}
+            {visibleKnowledge.length === 0 && (
+              <div className="np-kb-empty">В этой области пока нет знаний.</div>
+            )}
           </div>
         </div>
 
         <aside className="np-area-right">
-          <div className="np-area-side-card np-area-improve">
-            <h4>Что стоит добавить</h4>
-            <ul className="np-area-improve-list">
-              {(cov?.recommendations ?? []).map((r) => (
-                <li key={r.id} onClick={() => handleRec(r)} role="button" tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleRec(r); }}>
-                  <div className="np-improve-title">{r.title}</div>
-                  <div className="np-improve-why">{r.description}</div>
-                  <span className="np-improve-chev" aria-hidden>›</span>
-                </li>
-              ))}
-              {(!cov || cov.recommendations.length === 0) && (
-                <li className="np-muted" style={{ cursor: "default" }}>Пока нет предложений</li>
-              )}
-            </ul>
-          </div>
+          <LocalIndexBlock area={area} percent={percent} tone={tone} cov={cov} onOpen={() => setDrawerOpen(true)} />
+          <ImproveBlock cov={cov} onRec={handleRec} />
         </aside>
       </div>
 
@@ -738,7 +350,7 @@ function AreaView({
   );
 }
 
-/* ---------- shared insight drawer ---------- */
+/* ---------- shared insight drawer (unchanged shape) ---------- */
 
 function KnowledgeInsightDrawer({
   title, percent, status, understanding, canUse, limitations, actionLabel, onAction, onClose,
@@ -802,22 +414,22 @@ function KnowledgeInsightDrawer({
 /* ---------- horizontal index widget ---------- */
 
 function IndexWidgetHorizontal({
-  onOpenChat, setToast,
-}: { onOpenChat?: (q: string) => void; setToast: (s: string | null) => void }) {
+  totalKnowledge, onOpenChat, setToast,
+}: {
+  totalKnowledge: number;
+  onOpenChat?: (q: string) => void;
+  setToast: (s: string | null) => void;
+}) {
   const [open, setOpen] = useState(false);
   const p = COVERAGE.profile;
   const tone = toneForPercent(p.percent);
   return (
     <>
-      <button
-        type="button"
-        className="np-index-horizontal"
-        onClick={() => setOpen(true)}
-      >
+      <button type="button" className="np-index-horizontal" onClick={() => setOpen(true)}>
         <div className="np-idxh-value">{p.percent}%</div>
         <div className="np-idxh-text">
           <div className="np-idxh-title">Индекс знания</div>
-          <div className="np-idxh-sub">{p.status} · {p.areasTotal} областей · {p.knowledgeTotal} знаний</div>
+          <div className="np-idxh-sub">{p.status} · {p.areasTotal} областей · {totalKnowledge} знаний</div>
         </div>
         <div className="np-idxh-bar-wrap">
           <div className={`np-progress np-progress--sm np-progress--${tone}`}>
@@ -857,34 +469,34 @@ function KbToast({ message, onDone }: { message: string; onDone: () => void }) {
 /* ---------- main page ---------- */
 
 function ProfileTab({
-  onOpenChat, setToast,
-}: { onOpenChat?: (q: string) => void; setToast: (s: string | null) => void }) {
+  areas, totalKnowledge, onOpenChat, onOpenSources, setToast,
+}: {
+  areas: UniversalArea[];
+  totalKnowledge: number;
+  onOpenChat?: (q: string) => void;
+  onOpenSources: (k: UniversalKnowledge) => void;
+  setToast: (s: string | null) => void;
+}) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "lowKnowledge" | "needsUpdate">("all");
-  const active = activeId ? AREAS.find((a) => a.id === activeId) ?? null : null;
-
-  const handleAlert = (a: KnowledgeAlert, k: Knowledge) => {
-    if (onOpenChat) onOpenChat(`Профиль компании, «${k.title}»: ${a.action?.label || a.message}`);
-    else setToast(a.action?.label ? `${a.action.label}: сценарий будет реализован через чат Норма.` : a.message);
-  };
+  const active = activeId ? areas.find((a) => a.id === activeId) ?? null : null;
 
   if (active) {
     return (
       <AreaView
         area={active}
-        areas={AREAS}
+        areas={areas}
         onSelect={setActiveId}
         onBack={() => setActiveId(null)}
-        onAlert={handleAlert}
         onOpenChat={onOpenChat}
-        setToast={setToast}
+        onOpenSources={onOpenSources}
       />
     );
   }
 
-  const lowCount = AREAS.filter((a) => coverageForArea(a.id)?.needsKnowledge).length;
-  const updCount = AREAS.filter((a) => coverageForArea(a.id)?.needsUpdate).length;
-  const filtered = AREAS.filter((a) => {
+  const lowCount = areas.filter((a) => coverageForArea(a.id)?.needsKnowledge).length;
+  const updCount = areas.filter((a) => coverageForArea(a.id)?.needsUpdate).length;
+  const filtered = areas.filter((a) => {
     const c = coverageForArea(a.id);
     if (filter === "lowKnowledge") return !!c?.needsKnowledge;
     if (filter === "needsUpdate") return !!c?.needsUpdate;
@@ -893,23 +505,24 @@ function ProfileTab({
 
   return (
     <>
-      <IndexWidgetHorizontal onOpenChat={onOpenChat} setToast={setToast} />
+      <IndexWidgetHorizontal
+        totalKnowledge={totalKnowledge}
+        onOpenChat={onOpenChat}
+        setToast={setToast}
+      />
 
       <div className="np-kb-filters">
         <div className="np-kb-filters-title">Области профиля</div>
         <div className="np-kb-filters-row">
-          <button
-            className={`np-kb-filter ${filter === "all" ? "active" : ""}`}
-            onClick={() => setFilter("all")}
-          >Все · {AREAS.length}</button>
-          <button
-            className={`np-kb-filter ${filter === "lowKnowledge" ? "active" : ""}`}
-            onClick={() => setFilter("lowKnowledge")}
-          >Мало знаний · {lowCount}</button>
-          <button
-            className={`np-kb-filter ${filter === "needsUpdate" ? "active" : ""}`}
-            onClick={() => setFilter("needsUpdate")}
-          >Нужно обновить · {updCount}</button>
+          <button className={`np-kb-filter ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
+            Все · {areas.length}
+          </button>
+          <button className={`np-kb-filter ${filter === "lowKnowledge" ? "active" : ""}`} onClick={() => setFilter("lowKnowledge")}>
+            Мало знаний · {lowCount}
+          </button>
+          <button className={`np-kb-filter ${filter === "needsUpdate" ? "active" : ""}`} onClick={() => setFilter("needsUpdate")}>
+            Нужно обновить · {updCount}
+          </button>
         </div>
       </div>
 
@@ -928,6 +541,63 @@ function ProfileTab({
 export default function KnowledgeBase({ onOpenChat }: { onOpenChat?: (q: string) => void }) {
   const [tab, setTab] = useState<"profile" | "docs" | "methodology">("profile");
   const [toast, setToast] = useState<string | null>(null);
+  const [overrides, setOverrides] = useState<Overrides>({});
+  const [sourcesFor, setSourcesFor] = useState<UniversalKnowledge | null>(null);
+
+  // Normalize the full profile once; apply overrides on read.
+  const baseAreas = useMemo(() => normalizeProfile(AREAS_RAW), []);
+  const areas: UniversalArea[] = useMemo(
+    () =>
+      baseAreas.map((a) => ({
+        ...a,
+        knowledge: a.knowledge.map((k) => applyOverrides(k, overrides[k.id])),
+      })),
+    [baseAreas, overrides],
+  );
+
+  const totalKnowledge = useMemo(
+    () => areas.reduce((n, a) => n + a.knowledge.length, 0),
+    [areas],
+  );
+
+  const openSources = (k: UniversalKnowledge) => setSourcesFor(k);
+
+  // Whenever overrides change, refresh the open drawer's knowledge snapshot.
+  const drawerKnowledge = useMemo(() => {
+    if (!sourcesFor) return null;
+    for (const a of areas) {
+      const found = a.knowledge.find((x) => x.id === sourcesFor.id);
+      if (found) return found;
+    }
+    return sourcesFor;
+  }, [sourcesFor, areas]);
+
+  const updateSource = (
+    kId: string,
+    next: KnowledgeSource,
+    ev: KnowledgeSourceReference | undefined,
+  ) => {
+    setOverrides((prev) => {
+      const current = prev[kId] || currentOverrideFrom(baseAreas, kId);
+      const sources = current.sources.map((s) => (s.id === next.id ? next : s));
+      const evidence = ev
+        ? [
+            ...current.evidence.filter((e) => e.sourceId !== next.id),
+            ev,
+          ]
+        : current.evidence;
+      return { ...prev, [kId]: { sources, evidence } };
+    });
+  };
+
+  const deleteSource = (kId: string, sourceId: string) => {
+    setOverrides((prev) => {
+      const current = prev[kId] || currentOverrideFrom(baseAreas, kId);
+      const sources = current.sources.filter((s) => s.id !== sourceId);
+      const evidence = current.evidence.filter((e) => e.sourceId !== sourceId);
+      return { ...prev, [kId]: { sources, evidence } };
+    });
+  };
 
   return (
     <div className="np-kb">
@@ -946,18 +616,54 @@ export default function KnowledgeBase({ onOpenChat }: { onOpenChat?: (q: string)
         </div>
       </div>
 
-      {tab === "profile" && <ProfileTab onOpenChat={onOpenChat} setToast={setToast} />}
+      {tab === "profile" && (
+        <ProfileTab
+          areas={areas}
+          totalKnowledge={totalKnowledge}
+          onOpenChat={onOpenChat}
+          onOpenSources={openSources}
+          setToast={setToast}
+        />
+      )}
       {tab === "docs" && (
         <div className="np-kb-placeholder">
-          <p className="np-muted">Здесь будут документы компании: индикатор зрелости, стандарты, оргструктура, финансовое состояние, аудиты и проверки, прочее.</p>
+          Раздел «Документы компании» будет здесь.
         </div>
       )}
       {tab === "methodology" && (
         <div className="np-kb-placeholder">
-          <p className="np-muted">Здесь будет методология: как Норм понимает компанию, как формируются области профиля, как оценивается покрытие и актуальность.</p>
+          Раздел «Методология» будет здесь.
         </div>
       )}
+
+      {drawerKnowledge && (
+        <KnowledgeSourcesDrawer
+          knowledgeTitle={drawerKnowledge.title}
+          sources={drawerKnowledge.sources || []}
+          evidence={drawerKnowledge.metadata?.sourceEvidence || []}
+          onClose={() => setSourcesFor(null)}
+          onUpdateSource={(s, ev) => updateSource(drawerKnowledge.id, s, ev)}
+          onDeleteSource={(id) => deleteSource(drawerKnowledge.id, id)}
+        />
+      )}
+
       {toast && <KbToast message={toast} onDone={() => setToast(null)} />}
     </div>
   );
+}
+
+function currentOverrideFrom(
+  baseAreas: UniversalArea[],
+  kId: string,
+): SourceOverride {
+  for (const a of baseAreas) {
+    const found = a.knowledge.find((x) => x.id === kId);
+    if (found) {
+      return {
+        sources: [...(found.sources || [])],
+        evidence: [...(found.metadata?.sourceEvidence || [])],
+      };
+    }
+  }
+  return { sources: [], evidence: [] };
 }
