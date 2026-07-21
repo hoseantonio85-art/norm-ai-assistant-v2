@@ -506,7 +506,7 @@ function ProfileTab({
     const hay: string[] = [a.title, a.description || "", c?.status || ""];
     for (const k of a.knowledge) {
       hay.push(k.title);
-      for (const s of k.sources || []) hay.push(s.title || s.id);
+      for (const s of k.sources || []) hay.push(s.name || s.documentName || s.id);
     }
     return hay.some((s) => s.toLowerCase().includes(q));
   });
