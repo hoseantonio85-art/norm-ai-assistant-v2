@@ -385,6 +385,7 @@ function AreaView({
               status={cov?.status ?? ""}
               knowledgeCount={area.knowledge.length}
               needsUpdateCount={needsUpd}
+              signal={signalSummary(insightForArea(area.id))}
               onOpen={() => setDrawerOpen(true)}
             />
             <ImproveBlock cov={cov} onRec={handleRec} />
@@ -416,13 +417,24 @@ function IndexWidgetHorizontal({
   const [open, setOpen] = useState(false);
   const p = COVERAGE.profile;
   const tone = toneForPercent(p.percent);
+  const signal = signalSummary(profileInsight());
   return (
     <>
       <button type="button" className="np-index-horizontal" onClick={() => setOpen(true)}>
         <div className="np-idxh-value">{p.percent}%</div>
         <div className="np-idxh-text">
           <div className="np-idxh-title">Индекс знания</div>
-          <div className="np-idxh-sub">{p.status} · {p.areasTotal} областей · {totalKnowledge} знаний</div>
+          <div className="np-idxh-sub">
+            {p.status} · {p.areasTotal} областей · {totalKnowledge} знаний
+            {signal && (
+              <>
+                {" · "}
+                <span className={`np-area-signal-inline np-area-signal--${signal.tone}`}>
+                  {signal.label}
+                </span>
+              </>
+            )}
+          </div>
         </div>
         <div className="np-idxh-bar-wrap">
           <div className={`np-progress np-progress--sm np-progress--${tone}`}>
