@@ -1193,26 +1193,43 @@
 /* ==========================================================
    Profile workspace — nav rail + area workspace (open area view)
    ========================================================== */
-.np-profile-workspace {
+.np-area-screen {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 24px;
-  align-items: stretch;
-  min-height: calc(100vh - 200px);
+  grid-template-columns: 240px minmax(0, 1fr);
+  width: 100%;
+  min-height: 100vh;
   animation: fadeIn .18s ease;
 }
 .np-profile-rail {
   position: sticky;
-  top: 16px;
-  align-self: start;
-  min-height: calc(100vh - 200px);
-  padding: 18px 14px;
+  top: 0;
+  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 52px 16px 32px;
   background: #fff;
-  border: 1px solid var(--np-border);
-  border-radius: 16px;
+  border: none;
+  border-right: 1px solid var(--np-border);
+  border-radius: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+.np-area-stage {
+  min-width: 0;
+  padding: 52px 32px 80px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.np-area-container {
+  width: 100%;
+  max-width: 1240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 .np-profile-rail-title {
   font-size: 11px; color: var(--np-muted);
@@ -1237,10 +1254,6 @@
 }
 .np-profile-rail-name { font-size: 13px; font-weight: 600; color: #1f2937; }
 
-.np-area-workspace {
-  display: flex; flex-direction: column; gap: 20px;
-  min-width: 0;
-}
 .np-area-workhead {
   display: grid; grid-template-columns: auto 1fr; gap: 14px;
   align-items: start;
@@ -1265,29 +1278,31 @@
 
 .np-area-content {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) 278px;
   gap: 16px;
   align-items: start;
+  min-width: 0;
 }
 .np-area-content .np-area-right {
   position: sticky; top: 16px;
   display: flex; flex-direction: column; gap: 12px;
 }
 
-@media (max-width: 1200px) {
-  .np-profile-workspace { grid-template-columns: 220px minmax(0, 1fr); gap: 18px; }
+@media (max-width: 1250px) {
+  .np-area-screen { grid-template-columns: 220px minmax(0, 1fr); }
+  .np-area-stage { padding: 40px 24px 64px; }
 }
 @media (max-width: 1000px) {
   .np-area-content { grid-template-columns: 1fr; }
   .np-area-content .np-area-right { position: static; order: -1; }
 }
 @media (max-width: 820px) {
-  .np-profile-workspace {
+  .np-area-screen {
     display: flex; flex-direction: column; min-height: 0;
   }
   .np-profile-rail {
-    position: static; min-height: 0; padding: 12px;
-    flex-direction: column;
+    position: static; height: auto; min-height: 0; padding: 12px;
+    border-right: none; border-bottom: 1px solid var(--np-border);
   }
   .np-profile-rail-list {
     flex-direction: row; overflow-x: auto; gap: 6px;
@@ -1295,6 +1310,7 @@
   }
   .np-profile-rail-list::-webkit-scrollbar { display: none; }
   .np-profile-rail-item { flex: 0 0 auto; min-width: 160px; }
+  .np-area-stage { padding: 20px 16px 48px; }
   .np-area-workhead-title { font-size: 22px; }
 }
 
