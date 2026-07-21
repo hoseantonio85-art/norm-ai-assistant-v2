@@ -984,11 +984,15 @@
 
 @media (max-width: 1150px) {
   .np-area-layout { grid-template-columns: 220px minmax(0, 1fr); }
-  .np-area-right { position: static; grid-column: 1 / -1; }
+  .np-area-right { position: static; grid-column: 2; grid-row: 1; }
+  .np-area-center { grid-column: 2; grid-row: 2; }
+  .np-area-left { grid-row: 1 / span 2; }
 }
 @media (max-width: 850px) {
-  .np-area-layout { grid-template-columns: 1fr; }
-  .np-area-left { position: static; }
+  .np-area-layout { display: flex; flex-direction: column; }
+  .np-area-left { position: static; order: 3; }
+  .np-area-right { order: 1; }
+  .np-area-center { order: 2; }
   .np-kb-grid { grid-template-columns: 1fr; }
 }
 @media (min-width: 851px) and (max-width: 1150px) {
@@ -997,3 +1001,100 @@
 
 /* hide legacy testbadge if still rendered somewhere */
 .np-uv-testbadge { display: none; }
+
+/* ---------- SourceTags ---------- */
+.np-src-tags {
+  display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.np-src-tag {
+  border: 1px solid #e6e2f8;
+  background: #f5f3ff;
+  color: #4c3fa8;
+  border-radius: 7px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+  font-weight: 500;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.np-src-tag:hover { background: #ede9fe; }
+.np-src-tag--more {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #4b5563;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  max-width: none;
+}
+.np-src-tag--empty {
+  background: #f3f4f6; color: #6b7280; border-color: #e5e7eb;
+  cursor: default;
+}
+.np-src-actual { font-size: 12px; color: var(--np-muted); margin-left: 4px; }
+
+/* ---------- Sources drawer cards ---------- */
+.np-drawer--sources { width: min(520px, 100%); }
+.np-drawer--sources .np-drawer-body { gap: 14px; }
+
+.np-src-card {
+  border: 1px solid var(--np-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.np-src-card-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.np-src-card-title { font-size: 14px; font-weight: 700; color: #1f2937; }
+.np-src-card-actions { display: flex; gap: 12px; }
+.np-src-linkbtn {
+  background: none; border: none; padding: 0; color: var(--np-mint, #22c4a3);
+  font-size: 12px; cursor: pointer; text-decoration: none;
+}
+.np-src-linkbtn:hover { text-decoration: underline; }
+.np-src-linkbtn--danger { color: #dc2626; }
+
+.np-src-card-body {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.np-src-block-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--np-muted); margin-bottom: 2px; font-weight: 700;
+}
+.np-src-quote {
+  font-size: 13px; line-height: 1.5; color: #1f2937;
+  padding: 8px 10px; background: var(--np-bg-soft); border-radius: 8px;
+  border-left: 2px solid var(--np-mint, #22c4a3);
+}
+.np-src-file {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; background: var(--np-bg-soft); border-radius: 8px;
+  font-size: 13px;
+}
+.np-src-file-name { flex: 1; }
+.np-src-openlink { color: var(--np-mint, #22c4a3); font-size: 13px; }
+.np-src-locator { font-size: 13px; color: #1f2937; }
+
+.np-src-confirm {
+  background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
+  padding: 10px 12px; font-size: 13px; color: #7c2d12;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.np-src-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.np-btn--danger { background: #dc2626; color: #fff; border-color: #dc2626; }
+
+.np-src-form { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+.np-src-form label { display: flex; flex-direction: column; gap: 4px; color: #374151; font-size: 12px; }
+.np-src-form input, .np-src-form textarea {
+  border: 1px solid var(--np-border); border-radius: 8px; padding: 8px 10px;
+  font: inherit; font-size: 13px; color: #1f2937; background: #fff;
+}
+.np-src-form input:focus, .np-src-form textarea:focus { outline: 2px solid var(--np-mint-soft, #d4f3ea); border-color: var(--np-mint, #22c4a3); }
+.np-src-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.np-src-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
