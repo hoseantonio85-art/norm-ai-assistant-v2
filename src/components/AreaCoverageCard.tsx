@@ -1,10 +1,11 @@
 export function AreaCoverageCard({
-  percent, status, knowledgeCount, needsUpdateCount, onOpen,
+  percent, status, knowledgeCount, needsUpdateCount, signal, onOpen,
 }: {
   percent: number;
   status: string;
   knowledgeCount: number;
   needsUpdateCount?: number;
+  signal?: { tone: "conflict" | "warning" | "stale"; label: string } | null;
   onOpen: () => void;
 }) {
   const tone = percent >= 70 ? "ok" : percent >= 40 ? "warn" : "low";
@@ -17,12 +18,20 @@ export function AreaCoverageCard({
         <div className="np-area-cov-title">Знание области</div>
         <div className="np-area-cov-percent">{percent}%</div>
       </div>
-      <div className="np-area-cov-status">{status}</div>
+      <div className={`np-area-cov-status np-area-cov-status--${tone}`}>{status}</div>
       <div className="np-area-cov-count">
         {knowledgeCount} {kWord}
         {needsUpdateCount && needsUpdateCount > 0
           ? ` · ${needsUpdateCount} требуют обновления`
           : ""}
+        {signal ? (
+          <>
+            {" · "}
+            <span className={`np-area-signal-inline np-area-signal--${signal.tone}`}>
+              {signal.label}
+            </span>
+          </>
+        ) : null}
       </div>
       <div className="np-area-cov-bar">
         <div className={`np-progress np-progress--sm np-progress--${tone}`}>
