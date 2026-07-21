@@ -515,7 +515,6 @@ function ProfileTab({
 
   return (
     <section className="np-kb-profile-content">
-      <IndexWidgetHorizontal totalKnowledge={totalKnowledge} />
       <div className="np-kb-area-grid np-kb-grid">
         {filtered.map((a) => (
           <AreaCard key={a.id} area={a} onOpen={() => setActiveId(a.id)} />
