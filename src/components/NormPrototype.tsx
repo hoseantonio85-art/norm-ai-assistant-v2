@@ -1256,12 +1256,19 @@ function FocusPointModal({
               </div>
             </section>
             <section className="np-focus-island">
-              <h4 className="np-focus-island-title">Что ещё нужно уточнить</h4>
+              <h4 className="np-focus-island-title">Что ещё нужно уточнить для Норма</h4>
               <p className="np-focus-island-text">{point.clarification}</p>
               <div className="np-focus-clarification-value">
                 <div className="np-focus-checkpoint-label">Зачем это нужно</div>
                 <p className="np-focus-island-text">{point.clarificationValue}</p>
               </div>
+              <button
+                type="button"
+                className="np-btn np-btn-primary np-focus-clarify-btn"
+                onClick={() => onDiscuss(point.clarificationChatQuestion)}
+              >
+                Уточнить знания
+              </button>
             </section>
             <section className="np-focus-island">
               <h4 className="np-focus-island-title">Связанные объекты</h4>
