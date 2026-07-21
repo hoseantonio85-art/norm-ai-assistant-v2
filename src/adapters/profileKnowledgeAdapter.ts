@@ -15,6 +15,14 @@ import type {
   KnowledgeValueType,
 } from "../types/universalKnowledge";
 
+type StateCode =
+  | "known" | "partial" | "known_empty" | "unknown"
+  | "not_applicable" | "conflicting";
+function coerceState(s: { code: string; label: string } | undefined) {
+  if (!s) return { code: "unknown" as StateCode, label: "Пока неизвестно" };
+  return { code: (s.code as StateCode) || ("unknown" as StateCode), label: s.label };
+}
+
 export interface UniversalArea {
   id: string;
   title: string;
