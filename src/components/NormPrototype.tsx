@@ -1140,17 +1140,40 @@ export default function NormPrototype() {
 
         <section className="np-section">
           <div className="np-sec-head">
-            <h2>Я собрал важные изменения в законах и СМИ</h2>
-            <button className="np-link">Смотреть все →</button>
+            <h2>На что стоит обратить внимание</h2>
+            <button
+              className="np-link"
+              onClick={() => setToast("Полный список фокусных точек появится позже")}
+            >
+              Смотреть все →
+            </button>
           </div>
-          <div className="np-news-wrap">
-            {NEWS.map((n, i) => (
-              <article key={i} className="np-news-card">
-                <span className="np-tag">{n.tag}</span>
-                <h3>{n.title}</h3>
-                <p>{n.body}</p>
-                <button className="np-link np-link-blue">Принять меры →</button>
-              </article>
+          <div className="np-focus-wrap">
+            {FOCUS_POINTS.map((fp) => (
+              <button
+                key={fp.id}
+                type="button"
+                className={`np-focus-card np-focus-card--${fp.tone}`}
+                onClick={() => setFocusIdx(FOCUS_POINTS.indexOf(fp))}
+              >
+                <div className="np-focus-card-top">
+                  <span className={`np-focus-type np-focus-type--${fp.tone}`}>{fp.type}</span>
+                  <span className="np-focus-area">{fp.area}</span>
+                </div>
+                <div className={`np-focus-state np-focus-state--${fp.tone}`}>
+                  <span className="np-focus-dot" aria-hidden />
+                  {fp.state}
+                </div>
+                <h3 className="np-focus-title">{fp.title}</h3>
+                <p className="np-focus-short">{fp.short}</p>
+                <div className="np-focus-missing">
+                  <span className="np-focus-missing-label">Чего не хватает</span>
+                  {fp.missing}
+                </div>
+                <div className="np-focus-cta">
+                  {fp.cta} <Icon name="arrow" size={14} />
+                </div>
+              </button>
             ))}
           </div>
         </section>
