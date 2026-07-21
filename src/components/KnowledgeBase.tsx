@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import profileData from "../data/company_profile_full.json";
 import universalDemo from "../data/universal_knowledge_demo.json";
 import coverageData from "../data/profile_coverage.json";
@@ -456,7 +457,7 @@ function KnowledgeAccordion({
   summary?: string | null;
   meta?: string | null;
   defaultOpen?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const tagClass =
