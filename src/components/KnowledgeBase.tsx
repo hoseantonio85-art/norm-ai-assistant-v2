@@ -253,10 +253,12 @@ function AreaCard({ area, onOpen }: { area: UniversalArea; onOpen: () => void })
               </span>
             )}
             {signal && (
-              <span className={`np-area-card-signals np-area-signal--${signal.tone}`}>
-                <span className="np-area-card-signal-dot" />
-                {signal.label}
-              </span>
+              <>
+                <span className="np-area-card-state-divider" aria-hidden>·</span>
+                <span className={`np-area-card-signals np-area-signal--${signal.tone}`}>
+                  {signal.label}
+                </span>
+              </>
             )}
           </div>
         </div>
