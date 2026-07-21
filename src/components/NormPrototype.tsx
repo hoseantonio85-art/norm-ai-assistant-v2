@@ -107,10 +107,138 @@ const NAV = [
   { id: "kb", label: "База знаний", icon: "book" },
 ];
 
-const NEWS = [
-  { tag: "Законодательство", title: "Обработка персональных данных", body: "Ужесточились требования к обработке персональных данных и существенно выросли штрафы за выявленные нарушения." },
-  { tag: "Новость", title: "Магазин-склад Самоката закрыт Роспотребнадзором", body: "Невский районный суд Петербурга закрыл магазин-склад ООО 'Умный Ритейл' в Ростове-на-Дону по иску Роспотребнадзора." },
-  { tag: "Законодательство", title: "Ужесточение требований к обработке персональных данных", body: "Ужесточились требования к обработке персональных данных и существенно выросли штрафы за выявленные нарушения." },
+interface FocusSource {
+  type: string;
+  title: string;
+  date?: string;
+  excerpt: string;
+  relation: string;
+}
+interface FocusPoint {
+  id: string;
+  type: string;
+  area: string;
+  state: string;
+  tone: "attention" | "warning" | "positive";
+  title: string;
+  short: string;
+  missing: string;
+  cta: string;
+  impact: string;
+  impactTone: "strong" | "positive";
+  confidence: "низкая" | "средняя" | "высокая";
+  intro: string;
+  noticed: string;
+  whyMatters: string;
+  needMore: string;
+  canDo: string;
+  related: string[];
+  sources: FocusSource[];
+  primaryAction: string;
+  secondaryActions: string[];
+  chatQuestion: string;
+}
+
+const FOCUS_POINTS: FocusPoint[] = [
+  {
+    id: "fp-delivery",
+    type: "Внешний сигнал",
+    area: "Клиенты и продукты",
+    state: "Стоит проверить",
+    tone: "attention",
+    title: "Бесплатная доставка конкурента может увеличить отток",
+    short: "Конкурент изменил условия в 12 городах присутствия компании. Стоимость доставки уже входит в число частых причин отказа от заказа.",
+    missing: "Не хватает данных об активных клиентах в этих городах.",
+    cta: "Оценить влияние",
+    impact: "сильное",
+    impactTone: "strong",
+    confidence: "средняя",
+    intro: "Я заметил изменение, которое может затронуть клиентскую активность в нескольких регионах. Пока это не подтверждённая потеря, а сценарий, который стоит проверить.",
+    noticed: "Конкурент запустил бесплатную доставку в 12 городах, где также работает компания.",
+    whyMatters: "По данным обращений клиентов, стоимость доставки входит в число частых причин отказа от заказа. Поэтому новое предложение конкурента может увеличить отток в затронутых городах.",
+    needMore: "Я не знаю, сколько активных клиентов компании находится в этих городах и какую долю выручки они формируют.",
+    canDo: "Если добавить количество активных клиентов и среднюю выручку на клиента, я смогу оценить масштаб возможного оттока, пересчитать потенциальные потери и проверить, нужно ли переоценить связанный риск.",
+    related: [
+      "риск «Снижение клиентской активности»",
+      "продукт «Экспресс-доставка»",
+      "12 городов присутствия",
+    ],
+    sources: [
+      { type: "Внешняя новость", title: "Конкурент запускает бесплатную доставку в 12 городах", date: "12 июля 2026", excerpt: "Крупный игрок объявил о бесплатной доставке во всех городах-миллионниках без ограничения по сумме заказа.", relation: "Основной внешний триггер: именно это изменение может повлиять на решения клиентов о заказе." },
+      { type: "Профиль компании", title: "География присутствия компании", date: "актуально на 1 июля 2026", excerpt: "Компания представлена в 34 городах России, в 12 из них — прямое пересечение с зоной действия акции.", relation: "Позволяет определить регионы, где новое предложение конкурента будет заметно клиентам." },
+      { type: "Аналитика", title: "Причины отказа от заказа, июнь 2026", date: "июнь 2026", excerpt: "Стоимость доставки — вторая по частоте причина отмены заказа после длительной доставки.", relation: "Показывает, что цена доставки уже сейчас чувствительна для клиентов." },
+      { type: "Реестр рисков", title: "Снижение клиентской активности", excerpt: "Риск среднего уровня, оценивается ежеквартально.", relation: "Возможные последствия сценария оцениваются в рамках этого риска." },
+    ],
+    primaryAction: "Передать данные",
+    secondaryActions: ["Открыть риск", "Обсудить с Нормом"],
+    chatQuestion: "Помоги оценить, как бесплатная доставка конкурента может повлиять на отток клиентов",
+  },
+  {
+    id: "fp-supply",
+    type: "Связь событий",
+    area: "Партнёры и поставки",
+    state: "Требует внимания",
+    tone: "warning",
+    title: "Задержки поставок начинают влиять на наличие товаров",
+    short: "За месяц три поставщика несколько раз нарушили сроки, а доля отсутствующих товаров выросла на 18%.",
+    missing: "Не подтверждено, что для этих поставщиков предусмотрена быстрая замена.",
+    cta: "Проверить зависимость",
+    impact: "сильное",
+    impactTone: "strong",
+    confidence: "высокая",
+    intro: "Несколько внутренних событий складываются в общую тенденцию. По отдельности они могли выглядеть некритично, но вместе уже могут влиять на непрерывность продаж.",
+    noticed: "За последний месяц три поставщика несколько раз нарушили сроки поставки. За тот же период доля отсутствующих товаров выросла на 18%.",
+    whyMatters: "Повторяющиеся задержки совпадают по времени с ухудшением доступности товаров. Это может привести к снижению продаж и росту недовольства клиентов.",
+    needMore: "Я не нашёл подтверждения, что для этих поставщиков существуют резервные варианты и что переключение можно выполнить достаточно быстро.",
+    canDo: "Если уточнить долю поставок каждого контрагента и срок перехода на резерв, я смогу оценить возможные потери и влияние на непрерывность бизнеса.",
+    related: [
+      "риск «Нарушение непрерывности поставок»",
+      "три инцидента с задержкой",
+      "поставщики «Альфа Фуд», «Север Трейд» и «Фреш Лайн»",
+      "показатель доступности товаров",
+    ],
+    sources: [
+      { type: "Инциденты", title: "Инциденты поставок за июнь 2026", date: "июнь 2026", excerpt: "Зафиксировано 7 задержек, из них 5 — по трём ключевым поставщикам.", relation: "Показывает повторяемость и концентрацию задержек у одних и тех же контрагентов." },
+      { type: "Аналитика", title: "Доступность ассортимента по неделям", date: "июнь–июль 2026", excerpt: "Доля отсутствующих SKU выросла с 6% до 24% за 4 недели.", relation: "Демонстрирует связь задержек с ухудшением наличия товаров." },
+      { type: "Профиль компании", title: "Договоры с ключевыми поставщиками", excerpt: "В контрактах указаны SLA по срокам, но нет явного плана замены.", relation: "Помогает понять, есть ли у компании формальный резерв." },
+      { type: "Реестр рисков", title: "Нарушение непрерывности поставок", excerpt: "Риск оценивается как средний, но может быть переоценён при подтверждении зависимости.", relation: "Именно этот риск может измениться по итогам проверки." },
+    ],
+    primaryAction: "Проверить резервных поставщиков",
+    secondaryActions: ["Открыть риск", "Посмотреть инциденты", "Обсудить с Нормом"],
+    chatQuestion: "Помоги проверить зависимость от поставщиков с повторяющимися задержками",
+  },
+  {
+    id: "fp-it",
+    type: "Положительное изменение",
+    area: "ИТ и непрерывность",
+    state: "Есть улучшение",
+    tone: "positive",
+    title: "После новой меры число критичных сбоев снизилось",
+    short: "После настройки дополнительного мониторинга число критичных ошибок снизилось на 37%, а повторных инцидентов не было 21 день.",
+    missing: "Для уверенного вывода нужен более длинный период наблюдения.",
+    cta: "Посмотреть результат",
+    impact: "положительное",
+    impactTone: "positive",
+    confidence: "средняя",
+    intro: "Есть первые признаки, что новая мера работает. Пока рано считать эффект окончательно подтверждённым, но изменение выглядит положительным.",
+    noticed: "После подключения дополнительного мониторинга число критичных ошибок снизилось на 37%. Повторных массовых сбоев не было 21 день.",
+    whyMatters: "Ранее повторяющиеся сбои влияли на онлайн-расчёты и увеличивали потенциальные потери. Если улучшение сохранится, связанный риск можно будет переоценить.",
+    needMore: "Период наблюдения пока слишком короткий. Для уверенного вывода нужно сравнить показатели минимум за 30 дней и проверить работу системы во время пиковой нагрузки.",
+    canDo: "После завершения периода наблюдения я смогу оценить эффективность меры и предложить новую оценку остаточного риска.",
+    related: [
+      "мера «Дополнительный мониторинг онлайн-расчётов»",
+      "риск «Массовые сбои в системе онлайн-расчётов»",
+      "история связанных инцидентов",
+    ],
+    sources: [
+      { type: "Отчёт", title: "Отчёт мониторинга ИТ-систем", date: "июль 2026", excerpt: "Снижение количества критичных ошибок на 37% за последние 3 недели.", relation: "Основные числовые данные для оценки эффекта меры." },
+      { type: "Мера", title: "Дополнительный мониторинг онлайн-расчётов", excerpt: "Мера внедрена 30 июня 2026, включает автоматические алерты и еженедельный обзор.", relation: "Именно эта мера могла привести к наблюдаемому улучшению." },
+      { type: "Инциденты", title: "Журнал инцидентов за июнь–июль 2026", date: "июнь–июль 2026", excerpt: "После 30 июня массовых сбоев не зарегистрировано.", relation: "Подтверждает отсутствие повторных инцидентов в период наблюдения." },
+    ],
+    primaryAction: "Открыть меру",
+    secondaryActions: ["Посмотреть инциденты", "Обсудить с Нормом"],
+    chatQuestion: "Покажи, как новая мера повлияла на количество ИТ-сбоев",
+  },
 ];
 
 function Donut({ percent, color }: { percent: number; color: string }) {
@@ -888,10 +1016,223 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
   );
 }
 
+function FocusPointModal({
+  point,
+  activeSourceIdx,
+  onOpenSource,
+  onCloseSource,
+  onClose,
+  onToast,
+  onDiscuss,
+}: {
+  point: FocusPoint;
+  activeSourceIdx: number | null;
+  onOpenSource: (i: number) => void;
+  onCloseSource: () => void;
+  onClose: () => void;
+  onToast: (m: string) => void;
+  onDiscuss: (q: string) => void;
+}) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (activeSourceIdx !== null) {
+        e.stopPropagation();
+        onCloseSource();
+      } else {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [activeSourceIdx, onClose, onCloseSource]);
+
+  const handleAction = (label: string) => {
+    if (label === "Обсудить с Нормом") {
+      onDiscuss(point.chatQuestion);
+      return;
+    }
+    onToast(`«${label}» — этот раздел прототипа пока не реализован`);
+  };
+
+  const source = activeSourceIdx !== null ? point.sources[activeSourceIdx] : null;
+
+  return (
+    <div
+      className="np-focus-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={point.title}
+    >
+      <div className="np-focus-modal" onClick={(e) => e.stopPropagation()}>
+        <header className="np-focus-modal-head">
+          <div className="np-focus-modal-meta">
+            <span className={`np-focus-type np-focus-type--${point.tone}`}>{point.type}</span>
+            <span className="np-focus-area">{point.area}</span>
+            <span className={`np-focus-state np-focus-state--${point.tone}`}>
+              <span className="np-focus-dot" aria-hidden />
+              {point.state}
+            </span>
+          </div>
+          <h2 className="np-focus-modal-title">{point.title}</h2>
+          <p className="np-focus-modal-intro">{point.intro}</p>
+          <div className="np-focus-modal-badges">
+            <div className={`np-focus-badge np-focus-badge--${point.impactTone}`}>
+              <span className="np-focus-badge-label">Возможное влияние</span>
+              <span className="np-focus-badge-value">{point.impact}</span>
+            </div>
+            <div className="np-focus-badge">
+              <span className="np-focus-badge-label">Уверенность Норма</span>
+              <span className="np-focus-badge-value">{point.confidence}</span>
+            </div>
+          </div>
+          <button className="np-icon-btn np-focus-close" onClick={onClose} aria-label="Закрыть">
+            <Icon name="close" size={18} />
+          </button>
+        </header>
+
+        <div className="np-focus-modal-body">
+          <div className="np-focus-col np-focus-col--main">
+            <section className="np-focus-block">
+              <h4>Что я заметил</h4>
+              <p>{point.noticed}</p>
+            </section>
+            <section className="np-focus-block">
+              <h4>Почему это может повлиять на компанию</h4>
+              <p>{point.whyMatters}</p>
+            </section>
+            <section className="np-focus-block">
+              <h4>Чего пока не хватает</h4>
+              <p>{point.needMore}</p>
+            </section>
+            <section className="np-focus-block">
+              <h4>Что я смогу сделать</h4>
+              <p>{point.canDo}</p>
+            </section>
+            <section className="np-focus-block">
+              <h4>Связанные объекты</h4>
+              <ul className="np-focus-related">
+                {point.related.map((r, i) => (
+                  <li key={i}>{r}</li>
+                ))}
+              </ul>
+            </section>
+          </div>
+
+          <aside className="np-focus-col np-focus-col--side">
+            <div className="np-focus-side-block">
+              <div className="np-focus-side-label">Возможное влияние</div>
+              <div className={`np-focus-side-value np-focus-side-value--${point.impactTone}`}>
+                {point.impact}
+              </div>
+            </div>
+            <div className="np-focus-side-block">
+              <div className="np-focus-side-label">Уверенность в выводе</div>
+              <div className="np-focus-side-value">{point.confidence}</div>
+            </div>
+
+            <div className="np-focus-side-block">
+              <div className="np-focus-side-label">Источники</div>
+              <ul className="np-focus-sources">
+                {point.sources.map((s, i) => (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      className="np-focus-source-btn"
+                      onClick={() => onOpenSource(i)}
+                    >
+                      <span className="np-focus-source-type">{s.type}</span>
+                      <span className="np-focus-source-title">{s.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="np-focus-actions">
+              <button
+                className="np-btn np-btn-primary np-focus-primary"
+                onClick={() => handleAction(point.primaryAction)}
+              >
+                {point.primaryAction}
+              </button>
+              {point.secondaryActions.map((a) => (
+                <button
+                  key={a}
+                  className="np-btn np-btn-ghost np-focus-secondary"
+                  onClick={() => handleAction(a)}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+          </aside>
+        </div>
+
+        {source && (
+          <div
+            className="np-focus-src-backdrop"
+            onClick={onCloseSource}
+          >
+            <aside
+              className="np-focus-src-drawer"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label={source.title}
+            >
+              <div className="np-focus-src-head">
+                <div>
+                  <div className="np-focus-src-type">{source.type}</div>
+                  <h3 className="np-focus-src-title">{source.title}</h3>
+                  {source.date && <div className="np-focus-src-date">Актуально: {source.date}</div>}
+                </div>
+                <button
+                  className="np-icon-btn"
+                  onClick={onCloseSource}
+                  aria-label="Закрыть источник"
+                >
+                  <Icon name="close" size={18} />
+                </button>
+              </div>
+              <div className="np-focus-src-body">
+                <section className="np-focus-block">
+                  <h4>Содержание</h4>
+                  <p>{source.excerpt}</p>
+                </section>
+                <section className="np-focus-block">
+                  <h4>Как источник связан с выводом</h4>
+                  <p>{source.relation}</p>
+                </section>
+                <button
+                  className="np-btn np-btn-primary"
+                  onClick={() =>
+                    onToast("Открытие источника в этом прототипе пока не реализовано")
+                  }
+                >
+                  Открыть источник
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function NormPrototype() {
   const [modalQuery, setModalQuery] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [focusIdx, setFocusIdx] = useState<number | null>(null);
+  const [focusSourceIdx, setFocusSourceIdx] = useState<number | null>(null);
   const [activeNav, setActiveNav] = useState<string>("home");
   const [profileAreaOpen, setProfileAreaOpen] = useState(false);
   const [knowledgeBaseRootRequest, setKnowledgeBaseRootRequest] = useState(0);
@@ -1012,17 +1353,40 @@ export default function NormPrototype() {
 
         <section className="np-section">
           <div className="np-sec-head">
-            <h2>Я собрал важные изменения в законах и СМИ</h2>
-            <button className="np-link">Смотреть все →</button>
+            <h2>На что стоит обратить внимание</h2>
+            <button
+              className="np-link"
+              onClick={() => setToast("Полный список фокусных точек появится позже")}
+            >
+              Смотреть все →
+            </button>
           </div>
-          <div className="np-news-wrap">
-            {NEWS.map((n, i) => (
-              <article key={i} className="np-news-card">
-                <span className="np-tag">{n.tag}</span>
-                <h3>{n.title}</h3>
-                <p>{n.body}</p>
-                <button className="np-link np-link-blue">Принять меры →</button>
-              </article>
+          <div className="np-focus-wrap">
+            {FOCUS_POINTS.map((fp) => (
+              <button
+                key={fp.id}
+                type="button"
+                className={`np-focus-card np-focus-card--${fp.tone}`}
+                onClick={() => setFocusIdx(FOCUS_POINTS.indexOf(fp))}
+              >
+                <div className="np-focus-card-top">
+                  <span className={`np-focus-type np-focus-type--${fp.tone}`}>{fp.type}</span>
+                  <span className="np-focus-area">{fp.area}</span>
+                </div>
+                <div className={`np-focus-state np-focus-state--${fp.tone}`}>
+                  <span className="np-focus-dot" aria-hidden />
+                  {fp.state}
+                </div>
+                <h3 className="np-focus-title">{fp.title}</h3>
+                <p className="np-focus-short">{fp.short}</p>
+                <div className="np-focus-missing">
+                  <span className="np-focus-missing-label">Чего не хватает</span>
+                  {fp.missing}
+                </div>
+                <div className="np-focus-cta">
+                  {fp.cta} <Icon name="arrow" size={14} />
+                </div>
+              </button>
             ))}
           </div>
         </section>
@@ -1057,6 +1421,21 @@ export default function NormPrototype() {
           initialQuery={modalQuery}
           onClose={close}
           onToast={(m) => setToast(m)}
+        />
+      )}
+      {focusIdx !== null && (
+        <FocusPointModal
+          point={FOCUS_POINTS[focusIdx]}
+          activeSourceIdx={focusSourceIdx}
+          onOpenSource={(i) => setFocusSourceIdx(i)}
+          onCloseSource={() => setFocusSourceIdx(null)}
+          onClose={() => { setFocusSourceIdx(null); setFocusIdx(null); }}
+          onToast={(m) => setToast(m)}
+          onDiscuss={(q) => {
+            setFocusSourceIdx(null);
+            setFocusIdx(null);
+            openWith(q);
+          }}
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
