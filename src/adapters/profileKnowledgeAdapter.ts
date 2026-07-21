@@ -219,8 +219,8 @@ export function normalizeKnowledge(k: Knowledge): UniversalKnowledge {
       valueType: "object",
       children: [],
       state: k.state.code === "known_empty"
-        ? { code: "known_empty", label: "Не выявлено" }
-        : k.state,
+        ? { code: "known_empty" as StateCode, label: "Не выявлено" }
+        : coerceState(k.state),
     };
   } else if (items.length === 1) {
     content = itemToNode(items[0]);
@@ -242,7 +242,7 @@ export function normalizeKnowledge(k: Knowledge): UniversalKnowledge {
     key: k.id,
     title: k.title,
     description: k.summary ?? null,
-    state: k.state,
+    state: coerceState(k.state),
     content,
     metadata: {
       actualAt: k.actual_at ?? null,
@@ -251,7 +251,7 @@ export function normalizeKnowledge(k: Knowledge): UniversalKnowledge {
         label: k.freshness?.label ?? null,
         reason: k.freshness?.reason ?? null,
       },
-      origin: null,
+      origin: undefined,
       sourceEvidence: collectSourceEvidence(k),
     },
     sources: normalizeSources(k),
