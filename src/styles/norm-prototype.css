@@ -227,6 +227,12 @@
 
 /* Main */
 .np-main { padding: 56px 64px 80px; max-width: 1200px; }
+.np-main--profile-area {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 0;
+}
 .np-hello { font-size: 36px; line-height: 1.25; font-weight: 700; margin: 0 0 28px; letter-spacing: -0.5px; }
 .np-grad { background: var(--np-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
