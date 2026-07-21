@@ -893,6 +893,7 @@ export default function NormPrototype() {
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<string>("home");
+  const [profileAreaOpen, setProfileAreaOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("norm-sidebar-collapsed") === "1";
@@ -959,9 +960,12 @@ export default function NormPrototype() {
         </div>
       </aside>
 
-      <main className="np-main">
+      <main className={`np-main ${profileAreaOpen ? "np-main--profile-area" : ""}`}>
         {activeNav === "kb" ? (
-          <KnowledgeBase onOpenChat={(q) => openWith(q)} />
+          <KnowledgeBase
+            onOpenChat={(q) => openWith(q)}
+            onAreaViewChange={setProfileAreaOpen}
+          />
         ) : (
         <>
         <h1 className="np-hello">
