@@ -542,6 +542,26 @@ export default function KnowledgeBase({
   const [overrides, setOverrides] = useState<Overrides>({});
   const [sourcesFor, setSourcesFor] = useState<UniversalKnowledge | null>(null);
   const [activeAreaId, setActiveAreaId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "lowKnowledge" | "needsUpdate">("all");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        setSearchQuery("");
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [searchOpen]);
 
   useEffect(() => {
     onAreaViewChange?.(activeAreaId !== null && tab === "profile");
@@ -621,24 +641,89 @@ export default function KnowledgeBase({
   };
 
   const hideChrome = tab === "profile" && activeAreaId !== null;
+  const lowCount = areas.filter((a) => coverageForArea(a.id)?.needsKnowledge).length;
+  const updCount = areas.filter((a) => coverageForArea(a.id)?.needsUpdate).length;
+
+  const toggleSearch = () => {
+    setSearchOpen((v) => {
+      const next = !v;
+      if (!next) setSearchQuery("");
+      return next;
+    });
+  };
 
   return (
     <div className={`np-kb ${hideChrome ? "np-kb--area-open" : "np-page-container"}`}>
       {!hideChrome && (
-      <div className="np-kb-pageheader">
-        <h1>База знаний Норма AI</h1>
-        <div className="np-kb-tabs" role="tablist">
-          <button className={`np-kb-tab ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}>
-            Профиль компании
-          </button>
-          <button className={`np-kb-tab ${tab === "docs" ? "active" : ""}`} onClick={() => setTab("docs")}>
-            Документы компании
-          </button>
-          <button className={`np-kb-tab ${tab === "methodology" ? "active" : ""}`} onClick={() => setTab("methodology")}>
-            Методология
-          </button>
+      <>
+        <div className="np-kb-intro">
+          <h1 className="np-kb-intro-title">База знаний</h1>
+          <p className="np-kb-intro-desc">
+            Здесь Норм собирает цифровой профиль компании, чтобы точнее находить риски,
+            понимать их причины и моделировать возможные последствия.
+          </p>
         </div>
-      </div>
+        <div className="np-kb-controls">
+          <div className="np-kb-toolbar">
+            <div className="np-kb-toolbar-left">
+              <div className="np-kb-tabs" role="tablist">
+                <button className={`np-kb-tab ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}>
+                  Профиль компании
+                </button>
+                <button className={`np-kb-tab ${tab === "docs" ? "active" : ""}`} onClick={() => setTab("docs")}>
+                  Документы компании
+                </button>
+                <button className={`np-kb-tab ${tab === "methodology" ? "active" : ""}`} onClick={() => setTab("methodology")}>
+                  Методология
+                </button>
+              </div>
+              {tab === "profile" && (
+                <>
+                  <span className="np-kb-toolbar-divider" aria-hidden>/</span>
+                  <div className="np-kb-filters-row">
+                    <button className={`np-kb-filter ${filter === "all" ? "active" : ""}`} onClick={() => setFilter("all")}>
+                      Все · {areas.length}
+                    </button>
+                    <button className={`np-kb-filter ${filter === "lowKnowledge" ? "active" : ""}`} onClick={() => setFilter("lowKnowledge")}>
+                      Мало знаний · {lowCount}
+                    </button>
+                    <button className={`np-kb-filter ${filter === "needsUpdate" ? "active" : ""}`} onClick={() => setFilter("needsUpdate")}>
+                      Нужно обновить · {updCount}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              className={`np-kb-search-toggle ${searchOpen ? "active" : ""}`}
+              aria-label={searchOpen ? "Закрыть поиск" : "Открыть поиск"}
+              aria-pressed={searchOpen}
+              onClick={toggleSearch}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-3.5-3.5" />
+              </svg>
+            </button>
+          </div>
+          {searchOpen && (
+            <div className="np-kb-search-field">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <circle cx="11" cy="11" r="7" />
+                <path d="M20 20l-3.5-3.5" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Поиск по знаниям и областям"
+              />
+            </div>
+          )}
+        </div>
+      </>
       )}
 
       {tab === "profile" && (
@@ -650,6 +735,9 @@ export default function KnowledgeBase({
           setToast={setToast}
           activeId={activeAreaId}
           setActiveId={setActiveAreaId}
+          filter={filter}
+          setFilter={setFilter}
+          searchQuery={hideChrome ? "" : (searchOpen ? searchQuery : "")}
         />
       )}
       {tab === "docs" && (
