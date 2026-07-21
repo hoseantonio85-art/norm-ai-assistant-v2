@@ -280,7 +280,7 @@ function AreaView({
   const needsUpd = countNeedsUpdate(area);
 
   return (
-    <div className="np-profile-workspace">
+    <div className="np-area-screen">
       <aside className="np-profile-rail">
         <div className="np-profile-rail-title">Области профиля</div>
         <div className="np-profile-rail-list">
@@ -307,7 +307,8 @@ function AreaView({
         </div>
       </aside>
 
-      <section className="np-area-workspace">
+      <div className="np-area-stage">
+        <div className="np-area-container">
         <header className="np-area-workhead">
           <button
             type="button"
@@ -326,7 +327,7 @@ function AreaView({
         </header>
 
         <div className="np-area-content">
-          <div className="np-area-center">
+          <div className="np-area-knowledge">
             <div className="np-k-stack">
               {visibleKnowledge.map((k, i) => (
                 <KnowledgeAccordion
@@ -353,7 +354,8 @@ function AreaView({
             <ImproveBlock cov={cov} onRec={handleRec} />
           </aside>
         </div>
-      </section>
+        </div>
+      </div>
 
       {drawerOpen && (
         <KnowledgeInsightDrawer
