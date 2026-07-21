@@ -209,6 +209,7 @@ function AreaCard({ area, onOpen }: { area: UniversalArea; onOpen: () => void })
   const cov = coverageForArea(area.id);
   const percent = cov?.percent ?? 0;
   const status = cov?.status ?? "";
+  const tone = toneForPercent(percent);
   const srcCount = uniqueSourceCount(area);
   return (
     <article
@@ -220,7 +221,11 @@ function AreaCard({ area, onOpen }: { area: UniversalArea; onOpen: () => void })
       <div className="np-kb-card-top">
         <div className="np-kb-card-title">
           <h4>{area.title}</h4>
-          {status && <div className="np-kb-card-status">{status}</div>}
+          {status && (
+            <div className={`np-kb-card-status np-kb-card-status--${tone}`}>
+              {status}
+            </div>
+          )}
         </div>
         <CoverageRing percent={percent} size={46} />
       </div>
