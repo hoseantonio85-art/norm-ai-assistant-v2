@@ -192,6 +192,7 @@ const FOCUS_POINTS: FocusPoint[] = [
     primaryAction: "Передать данные",
     secondaryActions: ["Обсудить с Нормом"],
     chatQuestion: "Помоги оценить, как бесплатная доставка конкурента может повлиять на отток клиентов",
+    signalDate: "12 июля 2026",
   },
   {
     id: "fp-supply",
@@ -238,6 +239,7 @@ const FOCUS_POINTS: FocusPoint[] = [
     primaryAction: "Проверить резервных поставщиков",
     secondaryActions: ["Обсудить с Нормом"],
     chatQuestion: "Помоги проверить зависимость от поставщиков с повторяющимися задержками",
+    signalDate: "18 июля 2026",
   },
   {
     id: "fp-it",
@@ -281,6 +283,7 @@ const FOCUS_POINTS: FocusPoint[] = [
     primaryAction: "Открыть меру",
     secondaryActions: ["Обсудить с Нормом"],
     chatQuestion: "Покажи, как новая мера повлияла на количество ИТ-сбоев",
+    signalDate: "21 июля 2026",
   },
 ];
 
