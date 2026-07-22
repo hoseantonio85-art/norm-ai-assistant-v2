@@ -1465,6 +1465,7 @@ function FocusPointModal({
   onClose,
   onToast,
   onDiscuss,
+  overSummary,
 }: {
   point: FocusPoint;
   activeSourceIdx: number | "list" | null;
@@ -1473,6 +1474,7 @@ function FocusPointModal({
   onClose: () => void;
   onToast: (m: string) => void;
   onDiscuss: (q: string) => void;
+  overSummary?: boolean;
 }) {
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -1509,7 +1511,7 @@ function FocusPointModal({
 
   return (
     <div
-      className="np-focus-backdrop"
+      className={`np-focus-backdrop${overSummary ? " np-focus-backdrop--over-summary" : ""}`}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
