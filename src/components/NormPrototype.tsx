@@ -108,6 +108,7 @@ const NAV = [
 ];
 
 interface FocusSource {
+  id?: string;
   type: string;
   title: string;
   date?: string;
