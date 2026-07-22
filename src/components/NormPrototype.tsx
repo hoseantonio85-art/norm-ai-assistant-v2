@@ -114,6 +114,20 @@ interface FocusSource {
   date?: string;
   excerpt: string;
   relation: string;
+  document?: {
+    fileName: string;
+    mimeType?: string;
+    fileSize?: string;
+    updatedAt?: string;
+    downloadUrl?: string;
+  };
+  quote?: string;
+  locator?: {
+    page?: number;
+    section?: string;
+    sheet?: string;
+    range?: string;
+  };
 }
 interface FocusPoint {
   id: string;
