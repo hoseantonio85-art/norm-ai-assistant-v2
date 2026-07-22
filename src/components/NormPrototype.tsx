@@ -1173,14 +1173,111 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     if (l.includes("что ещё неизвестно") || l.includes("нужно добавить в профиль")) return runUnknowns();
     if (l.includes("добавить сначала")) return runFirstToAdd();
     if (l.includes("про gpu") || l.includes("известно про ит")) return runGpuKnown();
+    if (l.includes("задержки поставок")) return runSummarySupplies();
+    if (l.includes("риск оттока")) return runSummaryChurn();
+    if (l.includes("ит-мер") || l.includes("ит меры") || l.includes("результат ит")) return runSummaryIt();
     onToast("Этот переход будет добавлен позже");
+  }
+
+  async function runSituationDiscussion() {
+    setBusy(true);
+    push({ role: "status", text: "Собираю картину по трём направлениям" });
+    await wait(800);
+    replaceStatus("Сверяю приоритеты");
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Сейчас больше всего внимания требуют поставки: повторные задержки уже влияют на наличие товаров. Параллельно стоит проверить возможный отток клиентов и продолжить наблюдение за новой ИТ-мерой.</p>
+          <p>С чего начнём?</p>
+        </>
+      ),
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Разобрать задержки поставок", onClick: () => continueDialog("Разобрать задержки поставок") },
+        { label: "Проверить риск оттока", onClick: () => continueDialog("Проверить риск оттока") },
+        { label: "Оценить результат ИТ-меры", onClick: () => continueDialog("Оценить результат ИТ-меры") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runSummaryClarify() {
+    setBusy(true);
+    push({ role: "status", text: "Формулирую запрос" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <p>Чтобы дополнить картину, мне нужны три группы данных: продажи и маржинальность критичных товаров, резервные поставщики и сроки переключения, а также клиентская активность в затронутых городах. Ты можешь написать информацию здесь или прикрепить документ.</p>
+      ),
+    });
+    setBusy(false);
+  }
+
+  async function runSummarySupplies() {
+    setBusy(true);
+    push({ role: "status", text: "Смотрю ситуацию с поставками" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Три поставщика — «Альфа Фуд», «Север Трейд» и «Фреш Лайн» — повторно нарушили сроки. За месяц доля отсутствующих товаров выросла с 6% до 24%.</p>
+          <p>В первую очередь стоит определить критичные товары, зависящие от этих контрагентов, и подтвердить готовность резервных поставщиков.</p>
+        </>
+      ),
+    });
+    setBusy(false);
+  }
+
+  async function runSummaryChurn() {
+    setBusy(true);
+    push({ role: "status", text: "Проверяю сигнал по оттоку" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Конкурент запустил бесплатную доставку в 12 городах присутствия. Стоимость доставки уже входит в число частых причин отказа от заказа, поэтому это обоснованный ранний сигнал.</p>
+          <p>Пока фактическое снижение конверсии и повторных заказов не подтверждено — нужен локальный мониторинг по этим городам.</p>
+        </>
+      ),
+    });
+    setBusy(false);
+  }
+
+  async function runSummaryIt() {
+    setBusy(true);
+    push({ role: "status", text: "Смотрю на динамику ИТ-сбоев" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>После подключения дополнительного мониторинга число критичных ошибок снизилось на 37%, а массовые сбои не повторялись 21 день.</p>
+          <p>Результат обнадёживает, но период наблюдения пока короткий. Прежде чем снижать оценку риска, стоит подтвердить эффект при сопоставимой и пиковой нагрузке.</p>
+        </>
+      ),
+    });
+    setBusy(false);
   }
 
   function dispatch(text: string) {
     const t = text.trim();
     push({ role: "user", text: t });
     const n = t.toLowerCase().replace(/[?!.,]/g, "").trim();
-    if (n.includes("ген") && n.includes("директор") && n.includes("самиздат")) runDirector();
+    if (n.includes("текущую ситуацию в компании")) runSituationDiscussion();
+    else if (n.includes("продажах критичных товаров")) runSummaryClarify();
+    else if (n.includes("ген") && n.includes("директор") && n.includes("самиздат")) runDirector();
     else if (n.includes("gpu") || (n.includes("закупк") && n.includes("gpu"))) runGpu();
     else if (n.includes("что ты знаешь") || (n.includes("знаешь") && n.includes("компани"))) runCompany();
     else if (n.includes("продукт") || (n.includes("чем") && n.includes("занимается"))) runProducts();
