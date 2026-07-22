@@ -572,6 +572,17 @@ interface CompanySummary {
   sections: SummarySection[];
   discussQuestion: string;
   clarificationQuestion: string;
+  meta: {
+    period: string;
+    incidents: { value: number; label: string };
+    externalSignals: { value: number; label: string };
+    improvingMeasures: { value: number; label: string };
+    highRisks: { value: number; label: string };
+    risksWithoutMeasures: { value: number; label: string };
+    sourcesUsed: number;
+    knowledgeGaps: number;
+    updatedAtShort: string;
+  };
 }
 
 const COMPANY_SUMMARY: CompanySummary = {
