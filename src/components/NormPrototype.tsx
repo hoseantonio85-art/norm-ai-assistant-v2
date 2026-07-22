@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "../styles/norm-prototype.css";
 import KnowledgeBase from "./KnowledgeBase";
 import RiskObjectsChart, { RiskLossCards } from "./RiskObjectsChart";
+import { SourceDrawer, focusSourceToUni } from "./SourceDrawer";
 
 const LOSS_METRICS = {
   actual: { value: null as number | null, limitUsage: null as number | null, limitValue: null as number | null },
@@ -1974,6 +1975,16 @@ function FocusPointModal({
   const previewSources = point.sources.slice(0, 2);
   const remainingSources = Math.max(0, point.sources.length - 2);
 
+  const uniSources = useMemo(
+    () => point.sources.map((s) => focusSourceToUni(s)),
+    [point.sources],
+  );
+  const sdActiveId: string | "list" | null = !drawerOpen
+    ? null
+    : selectedIdx !== null
+      ? uniSources[selectedIdx]?.id ?? "list"
+      : "list";
+
   return (
     <div
       className={`np-focus-backdrop${overSummary ? " np-focus-backdrop--over-summary" : ""}`}
@@ -2168,77 +2179,26 @@ function FocusPointModal({
           </aside>
         </div>
 
-        {drawerOpen && (
-          <div className="np-focus-src-backdrop" onClick={onCloseSource}>
-            <aside
-              className="np-focus-src-drawer"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Источники"
-            >
-              <div className="np-focus-src-head">
-                <div>
-                  {source ? (
-                    <button
-                      type="button"
-                      className="np-focus-src-back"
-                      onClick={() => onOpenSource("list")}
-                    >
-                      ← К списку
-                    </button>
-                  ) : (
-                    <div className="np-focus-src-type">Источники</div>
-                  )}
-                  <h3 className="np-focus-src-title">
-                    {source ? source.title : `Источники · ${point.sources.length}`}
-                  </h3>
-                  {source?.date && (
-                    <div className="np-focus-src-date">Актуально: {source.date}</div>
-                  )}
-                </div>
-                <button
-                  className="np-icon-btn"
-                  onClick={onCloseSource}
-                  aria-label="Закрыть"
-                >
-                  <Icon name="close" size={18} />
-                </button>
-              </div>
-              <div className="np-focus-src-body">
-                {source ? (
-                  <SourceCardContent
-                    source={source}
-                    onOpen={() =>
-                      onToast("Открытие источника в этом прототипе пока не реализовано")
-                    }
-                  />
-                ) : (
-                  <ul className="np-focus-src-links np-focus-src-links--full">
-                    {point.sources.map((s, i) => (
-                      <li key={i}>
-                        <button
-                          type="button"
-                          className="np-focus-src-link"
-                          onClick={() => onOpenSource(i)}
-                        >
-                          <div className="np-focus-src-link-main">
-                            <span className="np-focus-src-link-type">{s.type}</span>
-                            <span className="np-focus-src-link-title">{s.title}</span>
-                            {s.date && (
-                              <span className="np-focus-src-link-date">{s.date}</span>
-                            )}
-                          </div>
-                          <span className="np-focus-src-link-chev" aria-hidden>→</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </aside>
-          </div>
-        )}
+        <SourceDrawer
+          sources={uniSources}
+          activeId={sdActiveId}
+          mode="conclusion"
+          listTitle="На чём основан вывод"
+          onOpen={(id) => {
+            if (id === "list") {
+              onOpenSource("list");
+            } else {
+              const idx = uniSources.findIndex((u) => u.id === id);
+              if (idx >= 0) onOpenSource(idx);
+            }
+          }}
+          onClose={onCloseSource}
+          onExternal={(s) => {
+            if (s.url) window.open(s.url, "_blank", "noopener,noreferrer");
+            else if (s.file?.downloadUrl) window.open(s.file.downloadUrl, "_blank", "noopener,noreferrer");
+            else onToast("Открытие источника в этом прототипе пока не реализовано");
+          }}
+        />
         {shareOpen && (
           <ShareDrawer
             kind={point.id === "fp-delivery" ? "fp-delivery" : point.id === "fp-supply" ? "fp-supply" : "fp-it"}
@@ -2559,44 +2519,24 @@ function CompanySummaryModal({
           </div>
         </div>
 
-        {source && (
-          <div className="np-summary-source-backdrop" onClick={onCloseSource}>
-            <aside
-              className="np-summary-source-drawer"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              aria-label={source.title}
-            >
-              <div className="np-summary-source-head">
-                <div className="np-summary-source-head-main">
-                  <div className="np-summary-source-type">{source.type}</div>
-                  <h3 className="np-summary-source-title">{source.title}</h3>
-                  {source.date && (
-                    <div className="np-summary-source-date">Актуально: {source.date}</div>
-                  )}
-                </div>
-                <button
-                  className="np-icon-btn"
-                  onClick={onCloseSource}
-                  aria-label="Закрыть"
-                >
-                  <Icon name="close" size={18} />
-                </button>
-              </div>
-              <div className="np-summary-source-body">
-                <SourceCardContent
-                  source={source}
-                  supportedClaim={supportedClaim}
-                  relation={sourceRelation}
-                  onOpen={() =>
-                    onToast("Открытие источника в этом прототипе пока не реализовано")
-                  }
-                />
-              </div>
-            </aside>
-          </div>
-        )}
+        {source && (() => {
+          const uni = focusSourceToUni(source, { supportedClaim });
+          if (sourceRelation) uni.relationToConclusion = sourceRelation;
+          return (
+            <SourceDrawer
+              sources={[uni]}
+              activeId={uni.id}
+              mode="conclusion"
+              onOpen={() => {}}
+              onClose={onCloseSource}
+              onExternal={(s) => {
+                if (s.url) window.open(s.url, "_blank", "noopener,noreferrer");
+                else if (s.file?.downloadUrl) window.open(s.file.downloadUrl, "_blank", "noopener,noreferrer");
+                else onToast("Открытие источника в этом прототипе пока не реализовано");
+              }}
+            />
+          );
+        })()}
         {shareOpen && (
           <ShareDrawer
             kind="summary"
