@@ -1,6 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "../styles/norm-prototype.css";
 import KnowledgeBase from "./KnowledgeBase";
+import RiskObjectsChart, { RiskLossCards } from "./RiskObjectsChart";
+
+const LOSS_METRICS = {
+  actual: { value: null as number | null, limitUsage: null as number | null, limitValue: null as number | null },
+  forecast: { value: null as number | null, delta: null as number | null },
+};
+
+const EVENT_WIDGETS = [
+  {
+    id: "in-progress",
+    tone: "violet" as const,
+    title: "У тебя в работе",
+    text: "Не завершена работа над несколькими событиями.",
+    cta: "103 события",
+  },
+  {
+    id: "new-tasks",
+    tone: "yellow" as const,
+    title: "Появились новые задачи",
+    text: "Эти события требуют утверждения риск-менеджером.",
+    cta: "103 события",
+  },
+];
 
 type Role = "user" | "assistant" | "status" | "file" | "summary" | "actions";
 
