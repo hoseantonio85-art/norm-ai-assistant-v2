@@ -428,6 +428,118 @@ const GAP_SOURCES: Record<string, FocusSource> = {
 };
 Object.assign(SOURCES_INDEX, GAP_SOURCES);
 
+// Decorate a subset of sources with document / quote / locator so the unified
+// source card can show honest document cards or system-object cards.
+const SOURCE_DECORATIONS: Record<string, Partial<FocusSource>> = {
+  "fp-supply-s0": {
+    document: {
+      fileName: "Инциденты поставок за июнь 2026.xlsx",
+      mimeType: "XLSX",
+      fileSize: "84 КБ",
+      updatedAt: "1 июля 2026",
+    },
+    quote: "Пять из семи зарегистрированных задержек связаны с поставщиками «Альфа Фуд», «Север Трейд» и «Фреш Лайн».",
+    locator: { sheet: "Инциденты", range: "18–24" },
+  },
+  "fp-supply-s1": {
+    document: {
+      fileName: "Доступность ассортимента, неделя 22–29.xlsx",
+      mimeType: "XLSX",
+      fileSize: "62 КБ",
+      updatedAt: "20 июля 2026",
+    },
+    quote: "Доля отсутствующих товаров выросла с 6% до 24% за четыре недели.",
+    locator: { sheet: "Weekly", range: "3–7" },
+  },
+  "fp-it-s0": {
+    document: {
+      fileName: "Отчёт ИТ-мониторинга, июль 2026.pdf",
+      mimeType: "PDF",
+      fileSize: "1,2 МБ",
+      updatedAt: "21 июля 2026",
+    },
+    quote: "Количество критичных ошибок за три недели снизилось на 37% относительно предыдущего периода.",
+    locator: { section: "Раздел 2. Динамика инцидентов" },
+  },
+  "fp-it-s2": {
+    document: {
+      fileName: "Журнал инцидентов, июнь–июль 2026.csv",
+      mimeType: "CSV",
+      fileSize: "210 КБ",
+      updatedAt: "21 июля 2026",
+    },
+    quote: "После 30 июня 2026 массовых сбоев не зарегистрировано.",
+    locator: { section: "Фильтр: severity=critical" },
+  },
+  "fp-delivery-s0": {
+    quote: "«С 12 июля 2026 бесплатная доставка распространяется на все города-миллионники без ограничения по сумме заказа».",
+    locator: { section: "Пресс-релиз конкурента, 12 июля 2026" },
+  },
+  "fp-delivery-s2": {
+    document: {
+      fileName: "Причины отказа от заказа, июнь 2026.xlsx",
+      mimeType: "XLSX",
+      fileSize: "48 КБ",
+      updatedAt: "1 июля 2026",
+    },
+    quote: "Стоимость доставки — вторая по частоте причина отмены заказа (17,4%).",
+    locator: { sheet: "Причины", range: "5–9" },
+  },
+};
+Object.entries(SOURCE_DECORATIONS).forEach(([id, dec]) => {
+  const s = SOURCES_INDEX[id];
+  if (s) Object.assign(s, dec);
+});
+
+// Recipients directory used by the ShareDrawer. Static demo data.
+interface Recipient {
+  id: string;
+  name: string;
+  role: string;
+  dept: string;
+  initials: string;
+}
+const RECIPIENTS: Recipient[] = [
+  { id: "r1", name: "Алексей Смирнов", role: "Владелец процесса поставок", dept: "Закупки", initials: "АС" },
+  { id: "r2", name: "Ирина Ковалёва", role: "Ответственный за риск QNR-0214", dept: "Управление рисками", initials: "ИК" },
+  { id: "r3", name: "Дмитрий Орлов", role: "Категорийный менеджер по поставщикам", dept: "Закупки", initials: "ДО" },
+  { id: "r4", name: "Ольга Никитина", role: "Руководитель клиентской аналитики", dept: "Маркетинг и клиенты", initials: "ОН" },
+  { id: "r5", name: "Павел Крылов", role: "Владелец продукта «Экспресс-доставка»", dept: "Продукт", initials: "ПК" },
+  { id: "r6", name: "Мария Титова", role: "Владелец ИТ-сервиса онлайн-расчётов", dept: "ИТ", initials: "МТ" },
+  { id: "r7", name: "Сергей Львов", role: "Ответственный за меру дополнительного мониторинга", dept: "ИТ", initials: "СЛ" },
+  { id: "r8", name: "Наталья Гусева", role: "Владелец риска QNR-0331", dept: "Управление рисками", initials: "НГ" },
+];
+
+function pickSuggested(kind: "summary" | "fp-delivery" | "fp-supply" | "fp-it"): { id: string; reason: string }[] {
+  switch (kind) {
+    case "fp-supply":
+      return [
+        { id: "r1", reason: "Владелец процесса поставок" },
+        { id: "r2", reason: "Ответственный за риск QNR-0214" },
+        { id: "r3", reason: "Отвечает за работу с поставщиками" },
+      ];
+    case "fp-delivery":
+      return [
+        { id: "r5", reason: "Владелец продукта «Экспресс-доставка»" },
+        { id: "r4", reason: "Отвечает за клиентскую аналитику" },
+      ];
+    case "fp-it":
+      return [
+        { id: "r6", reason: "Владелец ИТ-сервиса" },
+        { id: "r7", reason: "Ответственный за меру мониторинга" },
+        { id: "r8", reason: "Владелец риска QNR-0331" },
+      ];
+    case "summary":
+    default:
+      return [
+        { id: "r1", reason: "Владелец процесса поставок" },
+        { id: "r2", reason: "Ответственный за риск QNR-0214" },
+        { id: "r4", reason: "Отвечает за клиентскую аналитику" },
+        { id: "r6", reason: "Владелец ИТ-сервиса онлайн-расчётов" },
+      ];
+  }
+}
+
 interface SummarySourceRef {
   sourceId: string;
   label: string;
