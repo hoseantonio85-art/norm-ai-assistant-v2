@@ -108,6 +108,7 @@ const NAV = [
 ];
 
 interface FocusSource {
+  id?: string;
   type: string;
   title: string;
   date?: string;
@@ -371,6 +372,143 @@ const FOCUS_POINTS: FocusPoint[] = [
     signalDate: "21 июля 2026",
   },
 ];
+
+// assign stable ids to focus sources and build a lookup index
+FOCUS_POINTS.forEach((fp) => {
+  fp.sources.forEach((s, i) => {
+    if (!s.id) s.id = `${fp.id}-s${i}`;
+  });
+});
+const SOURCES_INDEX: Record<string, FocusSource> = {};
+FOCUS_POINTS.forEach((fp) => fp.sources.forEach((s) => { SOURCES_INDEX[s.id!] = s; }));
+
+interface SummarySourceRef {
+  sourceId: string;
+  label: string;
+}
+interface SummaryParagraph {
+  id: string;
+  subtitle?: string;
+  text: string;
+  sources: SummarySourceRef[];
+  focusPointId?: string;
+  focusPointLabel?: string;
+}
+interface SummarySection {
+  id: string;
+  title: string;
+  paragraphs: SummaryParagraph[];
+}
+interface CompanySummary {
+  updatedAt: string;
+  status: string;
+  statusTone: "attention";
+  sections: SummarySection[];
+  discussQuestion: string;
+  clarificationQuestion: string;
+}
+
+const COMPANY_SUMMARY: CompanySummary = {
+  updatedAt: "Актуально на 22 июля 2026, 09:30",
+  status: "требует внимания",
+  statusTone: "attention",
+  discussQuestion: "Хочу обсудить текущую ситуацию в компании и понять, на что обратить внимание в первую очередь",
+  clarificationQuestion: "Помоги уточнить данные о продажах критичных товаров, готовности резервных поставщиков и клиентской активности в 12 затронутых городах",
+  sections: [
+    {
+      id: "main",
+      title: "Главное",
+      paragraphs: [
+        {
+          id: "main-1",
+          text: "Основное влияние на компанию сейчас оказывают устойчивые задержки поставок: они уже отражаются на наличии товаров и могут приводить к потере продаж. Одновременно появился ранний сигнал возможного оттока клиентов в 12 городах, но его фактическое влияние пока не подтверждено. Дополнительный контроль ИТ-систем показывает положительный результат, однако данных ещё недостаточно, чтобы признать меру эффективной и снизить оценку риска.",
+          sources: [
+            { sourceId: "fp-supply-s0", label: "Инциденты поставок" },
+            { sourceId: "fp-supply-s1", label: "Аналитика ассортимента" },
+            { sourceId: "fp-it-s0", label: "Отчёт ИТ-мониторинга" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "risks",
+      title: "Риски и потери",
+      paragraphs: [
+        {
+          id: "risks-1",
+          subtitle: "Что уже происходит",
+          text: "Повторные задержки трёх поставщиков привели к росту доли отсутствующих товаров с 6% до 24%. Компания уже может терять продажи, однако масштаб фактических потерь пока не рассчитан.",
+          sources: [
+            { sourceId: "fp-supply-s0", label: "Инциденты поставок" },
+            { sourceId: "fp-supply-s2", label: "Профиль · Поставщики" },
+            { sourceId: "fp-supply-s3", label: "Риск QNR-0214" },
+          ],
+          focusPointId: "fp-supply",
+          focusPointLabel: "Задержки поставок начинают влиять на наличие товаров",
+        },
+        {
+          id: "risks-2",
+          subtitle: "Что может произойти",
+          text: "Бесплатная доставка конкурента может усилить отток клиентов в 12 городах присутствия. Пока это ранний сигнал: снижение конверсии и повторных заказов ещё не подтверждено.",
+          sources: [
+            { sourceId: "fp-delivery-s0", label: "Внешняя новость" },
+            { sourceId: "fp-delivery-s2", label: "Аналитика отказов" },
+            { sourceId: "fp-delivery-s1", label: "Профиль · География" },
+          ],
+          focusPointId: "fp-delivery",
+          focusPointLabel: "Бесплатная доставка конкурента может увеличить отток",
+        },
+      ],
+    },
+    {
+      id: "measures",
+      title: "Меры и контроль",
+      paragraphs: [
+        {
+          id: "measures-1",
+          text: "Дополнительный мониторинг ИТ-систем снизил число критичных ошибок на 37%, а массовые сбои не повторялись 21 день. Мера показывает хороший ранний результат, но её эффективность нужно подтвердить при сопоставимой и пиковой нагрузке. По проблемным поставщикам готовность резервного сценария пока не подтверждена.",
+          sources: [
+            { sourceId: "fp-it-s1", label: "Мера · Дополнительный мониторинг" },
+            { sourceId: "fp-it-s2", label: "Журнал ИТ-инцидентов" },
+            { sourceId: "fp-supply-s2", label: "Профиль · Поставщики" },
+          ],
+          focusPointId: "fp-it",
+          focusPointLabel: "После новой меры число критичных сбоев снизилось",
+        },
+      ],
+    },
+    {
+      id: "changes",
+      title: "Изменения и сигналы",
+      paragraphs: [
+        {
+          id: "changes-1",
+          text: "За последний месяц ситуация с поставками перешла от отдельных задержек к устойчивой проблеме. Во внешней среде конкурент изменил условия доставки в городах присутствия компании. В ИТ-контуре, напротив, наблюдается положительная динамика после подключения дополнительного контроля.",
+          sources: [
+            { sourceId: "fp-supply-s0", label: "Инциденты · июнь–июль" },
+            { sourceId: "fp-delivery-s0", label: "Новости рынка" },
+            { sourceId: "fp-it-s0", label: "Мониторинг мер" },
+          ],
+        },
+      ],
+    },
+    {
+      id: "gaps",
+      title: "Что пока известно не полностью",
+      paragraphs: [
+        {
+          id: "gaps-1",
+          text: "Норм достаточно хорошо видит динамику поставок и ИТ-сбоев, но пока не может точно оценить финансовые последствия. Не хватает данных о продажах критичных товаров, готовности резервных поставщиков и клиентской активности в 12 затронутых городах.",
+          sources: [
+            { sourceId: "fp-supply-s1", label: "Профиль · Продажи" },
+            { sourceId: "fp-supply-s2", label: "Профиль · Поставщики" },
+            { sourceId: "fp-delivery-s1", label: "Профиль · Клиенты" },
+          ],
+        },
+      ],
+    },
+  ],
+};
 
 function Donut({ percent, color }: { percent: number; color: string }) {
   const r = 26;
@@ -1035,14 +1173,111 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
     if (l.includes("что ещё неизвестно") || l.includes("нужно добавить в профиль")) return runUnknowns();
     if (l.includes("добавить сначала")) return runFirstToAdd();
     if (l.includes("про gpu") || l.includes("известно про ит")) return runGpuKnown();
+    if (l.includes("задержки поставок")) return runSummarySupplies();
+    if (l.includes("риск оттока")) return runSummaryChurn();
+    if (l.includes("ит-мер") || l.includes("ит меры") || l.includes("результат ит")) return runSummaryIt();
     onToast("Этот переход будет добавлен позже");
+  }
+
+  async function runSituationDiscussion() {
+    setBusy(true);
+    push({ role: "status", text: "Собираю картину по трём направлениям" });
+    await wait(800);
+    replaceStatus("Сверяю приоритеты");
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Сейчас больше всего внимания требуют поставки: повторные задержки уже влияют на наличие товаров. Параллельно стоит проверить возможный отток клиентов и продолжить наблюдение за новой ИТ-мерой.</p>
+          <p>С чего начнём?</p>
+        </>
+      ),
+    });
+    push({
+      role: "actions",
+      actions: [
+        { label: "Разобрать задержки поставок", onClick: () => continueDialog("Разобрать задержки поставок") },
+        { label: "Проверить риск оттока", onClick: () => continueDialog("Проверить риск оттока") },
+        { label: "Оценить результат ИТ-меры", onClick: () => continueDialog("Оценить результат ИТ-меры") },
+      ],
+    });
+    setBusy(false);
+  }
+
+  async function runSummaryClarify() {
+    setBusy(true);
+    push({ role: "status", text: "Формулирую запрос" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <p>Чтобы дополнить картину, мне нужны три группы данных: продажи и маржинальность критичных товаров, резервные поставщики и сроки переключения, а также клиентская активность в затронутых городах. Ты можешь написать информацию здесь или прикрепить документ.</p>
+      ),
+    });
+    setBusy(false);
+  }
+
+  async function runSummarySupplies() {
+    setBusy(true);
+    push({ role: "status", text: "Смотрю ситуацию с поставками" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Три поставщика — «Альфа Фуд», «Север Трейд» и «Фреш Лайн» — повторно нарушили сроки. За месяц доля отсутствующих товаров выросла с 6% до 24%.</p>
+          <p>В первую очередь стоит определить критичные товары, зависящие от этих контрагентов, и подтвердить готовность резервных поставщиков.</p>
+        </>
+      ),
+    });
+    setBusy(false);
+  }
+
+  async function runSummaryChurn() {
+    setBusy(true);
+    push({ role: "status", text: "Проверяю сигнал по оттоку" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>Конкурент запустил бесплатную доставку в 12 городах присутствия. Стоимость доставки уже входит в число частых причин отказа от заказа, поэтому это обоснованный ранний сигнал.</p>
+          <p>Пока фактическое снижение конверсии и повторных заказов не подтверждено — нужен локальный мониторинг по этим городам.</p>
+        </>
+      ),
+    });
+    setBusy(false);
+  }
+
+  async function runSummaryIt() {
+    setBusy(true);
+    push({ role: "status", text: "Смотрю на динамику ИТ-сбоев" });
+    await wait(700);
+    removeStatus();
+    push({
+      role: "assistant",
+      rich: (
+        <>
+          <p>После подключения дополнительного мониторинга число критичных ошибок снизилось на 37%, а массовые сбои не повторялись 21 день.</p>
+          <p>Результат обнадёживает, но период наблюдения пока короткий. Прежде чем снижать оценку риска, стоит подтвердить эффект при сопоставимой и пиковой нагрузке.</p>
+        </>
+      ),
+    });
+    setBusy(false);
   }
 
   function dispatch(text: string) {
     const t = text.trim();
     push({ role: "user", text: t });
     const n = t.toLowerCase().replace(/[?!.,]/g, "").trim();
-    if (n.includes("ген") && n.includes("директор") && n.includes("самиздат")) runDirector();
+    if (n.includes("текущую ситуацию в компании")) runSituationDiscussion();
+    else if (n.includes("продажах критичных товаров")) runSummaryClarify();
+    else if (n.includes("ген") && n.includes("директор") && n.includes("самиздат")) runDirector();
     else if (n.includes("gpu") || (n.includes("закупк") && n.includes("gpu"))) runGpu();
     else if (n.includes("что ты знаешь") || (n.includes("знаешь") && n.includes("компани"))) runCompany();
     else if (n.includes("продукт") || (n.includes("чем") && n.includes("занимается"))) runProducts();
@@ -1471,12 +1706,199 @@ function FocusPointModal({
   );
 }
 
+function CompanySummaryModal({
+  summary,
+  activeSourceId,
+  onOpenSource,
+  onCloseSource,
+  onOpenFocus,
+  onClose,
+  onDiscuss,
+  onClarify,
+  onToast,
+  focusOnTop,
+}: {
+  summary: CompanySummary;
+  activeSourceId: string | null;
+  onOpenSource: (id: string) => void;
+  onCloseSource: () => void;
+  onOpenFocus: (fpId: string) => void;
+  onClose: () => void;
+  onDiscuss: () => void;
+  onClarify: () => void;
+  onToast: (m: string) => void;
+  focusOnTop: boolean;
+}) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (focusOnTop) return; // focus modal handles its own escape
+      if (activeSourceId) {
+        e.stopPropagation();
+        onCloseSource();
+      } else {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [activeSourceId, onClose, onCloseSource, focusOnTop]);
+
+  const source = activeSourceId ? SOURCES_INDEX[activeSourceId] : null;
+
+  return (
+    <div
+      className="np-company-summary-backdrop"
+      onClick={() => {
+        if (activeSourceId) onCloseSource();
+        else onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ситуация в компании"
+    >
+      <div className="np-company-summary" onClick={(e) => e.stopPropagation()}>
+        <header className="np-company-summary-head">
+          <div className="np-company-summary-head-main">
+            <LogoMark size={32} />
+            <div>
+              <h2 className="np-company-summary-title">Ситуация в компании</h2>
+              <div className="np-company-summary-updated">{summary.updatedAt}</div>
+            </div>
+          </div>
+          <button
+            className="np-icon-btn np-company-summary-close"
+            onClick={onClose}
+            aria-label="Закрыть"
+          >
+            <Icon name="close" size={18} />
+          </button>
+        </header>
+
+        <div className="np-company-summary-body">
+          {summary.sections.map((sec) => (
+            <section key={sec.id} className="np-company-summary-section">
+              <h3 className="np-company-summary-section-title">{sec.title}</h3>
+              {sec.paragraphs.map((p) => (
+                <div key={p.id} className="np-company-summary-paragraph">
+                  {p.subtitle && (
+                    <div className="np-company-summary-subtitle">{p.subtitle}</div>
+                  )}
+                  <p className="np-company-summary-text">{p.text}</p>
+                  {p.sources.length > 0 && (
+                    <div className="np-summary-source-tags">
+                      {p.sources.map((s, i) => (
+                        <button
+                          key={`${p.id}-src-${i}`}
+                          type="button"
+                          className="np-summary-source-tag"
+                          onClick={() => onOpenSource(s.sourceId)}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {p.focusPointId && p.focusPointLabel && (
+                    <button
+                      type="button"
+                      className="np-summary-focus-link"
+                      onClick={() => onOpenFocus(p.focusPointId!)}
+                    >
+                      Подробнее: {p.focusPointLabel} →
+                    </button>
+                  )}
+                  {sec.id === "gaps" && (
+                    <div className="np-company-summary-clarify">
+                      <button
+                        type="button"
+                        className="np-btn np-btn-primary np-company-summary-clarify-btn"
+                        onClick={onClarify}
+                      >
+                        Уточнить знания
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </section>
+          ))}
+        </div>
+
+        <footer className="np-company-summary-footer">
+          <button
+            type="button"
+            className="np-focus-discuss np-company-summary-discuss"
+            onClick={onDiscuss}
+          >
+            Обсудить ситуацию с Нормом
+          </button>
+        </footer>
+
+        {source && (
+          <div className="np-summary-source-backdrop" onClick={onCloseSource}>
+            <aside
+              className="np-summary-source-drawer"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label={source.title}
+            >
+              <div className="np-summary-source-head">
+                <div className="np-summary-source-head-main">
+                  <div className="np-summary-source-type">{source.type}</div>
+                  <h3 className="np-summary-source-title">{source.title}</h3>
+                  {source.date && (
+                    <div className="np-summary-source-date">Актуально: {source.date}</div>
+                  )}
+                </div>
+                <button
+                  className="np-icon-btn"
+                  onClick={onCloseSource}
+                  aria-label="Закрыть"
+                >
+                  <Icon name="close" size={18} />
+                </button>
+              </div>
+              <div className="np-summary-source-body">
+                <section className="np-summary-source-block">
+                  <h4>Содержание</h4>
+                  <p>{source.excerpt}</p>
+                </section>
+                <section className="np-summary-source-block">
+                  <h4>Как источник связан с выводом</h4>
+                  <p>{source.relation}</p>
+                </section>
+                <button
+                  className="np-btn np-btn-primary"
+                  onClick={() =>
+                    onToast("Открытие источника в этом прототипе пока не реализовано")
+                  }
+                >
+                  Открыть источник
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function NormPrototype() {
   const [modalQuery, setModalQuery] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [focusIdx, setFocusIdx] = useState<number | null>(null);
   const [focusSourceIdx, setFocusSourceIdx] = useState<number | "list" | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summarySourceId, setSummarySourceId] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<string>("home");
   const [profileAreaOpen, setProfileAreaOpen] = useState(false);
   const [knowledgeBaseRootRequest, setKnowledgeBaseRootRequest] = useState(0);
@@ -1571,8 +1993,16 @@ export default function NormPrototype() {
         ) : (
         <div className="np-page-container">
         <h1 className="np-hello">
-          — Привет, Кирилл! Меня зовут <span className="np-grad">Норм.</span><br/>
-          Я твой <span className="np-grad">виртуальный помощник.</span>
+          — Привет, Кирилл!{" "}
+          <button
+            type="button"
+            className="np-hello-summary"
+            onClick={() => setSummaryOpen(true)}
+          >
+            Ситуация в компании{" "}
+            <span className="np-hello-summary-status">требует внимания</span>
+            <span className="np-hello-summary-arrow" aria-hidden>→</span>
+          </button>
         </h1>
 
         <div className="np-search" onClick={() => openWith(null)}>
@@ -1672,8 +2102,37 @@ export default function NormPrototype() {
           onDiscuss={(q) => {
             setFocusSourceIdx(null);
             setFocusIdx(null);
+            setSummaryOpen(false);
             openWith(q);
           }}
+        />
+      )}
+      {summaryOpen && (
+        <CompanySummaryModal
+          summary={COMPANY_SUMMARY}
+          activeSourceId={summarySourceId}
+          onOpenSource={(id) => setSummarySourceId(id)}
+          onCloseSource={() => setSummarySourceId(null)}
+          onOpenFocus={(fpId) => {
+            const idx = FOCUS_POINTS.findIndex((p) => p.id === fpId);
+            if (idx >= 0) {
+              setSummarySourceId(null);
+              setFocusIdx(idx);
+            }
+          }}
+          onClose={() => { setSummarySourceId(null); setSummaryOpen(false); }}
+          onDiscuss={() => {
+            setSummarySourceId(null);
+            setSummaryOpen(false);
+            openWith(COMPANY_SUMMARY.discussQuestion);
+          }}
+          onClarify={() => {
+            setSummarySourceId(null);
+            setSummaryOpen(false);
+            openWith(COMPANY_SUMMARY.clarificationQuestion);
+          }}
+          onToast={(m) => setToast(m)}
+          focusOnTop={focusIdx !== null}
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
