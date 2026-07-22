@@ -2220,12 +2220,18 @@ function CompanySummaryModal({
   onToast: (m: string) => void;
   focusOnTop: boolean;
 }) {
+  const [shareOpen, setShareOpen] = useState(false);
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (focusOnTop) return; // focus modal handles its own escape
+      if (shareOpen) {
+        e.stopPropagation();
+        setShareOpen(false);
+        return;
+      }
       if (activeSourceId) {
         e.stopPropagation();
         onCloseSource();
@@ -2238,7 +2244,7 @@ function CompanySummaryModal({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [activeSourceId, onClose, onCloseSource, focusOnTop]);
+  }, [activeSourceId, onClose, onCloseSource, focusOnTop, shareOpen]);
 
   const source = activeSourceId ? SOURCES_INDEX[activeSourceId] : null;
   const supportedClaim = useMemo(() => {
@@ -2249,6 +2255,81 @@ function CompanySummaryModal({
     }
     return null;
   }, [activeSourceId, summary.sections]);
+  const sourceRelation = source?.relation || null;
+
+  const sectionCompact = (sec: SummarySection) => {
+    const preview = sec.sources.slice(0, 3);
+    const more = Math.max(0, sec.sources.length - 3);
+    return (
+      <>
+        <div className="np-summary-island-head">
+          <span className={`np-summary-island-kicker np-summary-island-kicker--${sec.tone}`}>
+            {sec.title}
+          </span>
+          {sec.headline && (
+            <h4 className="np-summary-island-headline">{sec.headline}</h4>
+          )}
+        </div>
+        <p className="np-summary-island-text">{sec.text}</p>
+        {sec.actionLabel && sec.actionText && (
+          <div className="np-summary-action-line">
+            <span className={`np-summary-action-label np-summary-action-label--${sec.tone}`}>
+              {sec.actionLabel}:
+            </span>{" "}
+            <span>{sec.actionText}</span>
+          </div>
+        )}
+        {sec.sources.length > 0 && (
+          <div className="np-summary-source-tags">
+            {preview.map((s, i) => (
+              <button
+                key={`${sec.id}-src-${i}`}
+                type="button"
+                className="np-summary-source-tag"
+                onClick={() => onOpenSource(s.sourceId)}
+              >
+                {s.label}
+              </button>
+            ))}
+            {more > 0 && (
+              <button
+                type="button"
+                className="np-summary-source-tag np-summary-source-tag--more"
+                onClick={() => onOpenSource(sec.sources[3].sourceId)}
+              >
+                ещё {more}
+              </button>
+            )}
+          </div>
+        )}
+        {sec.focusPointId && sec.focusPointLabel && (
+          <button
+            type="button"
+            className="np-summary-focus-link"
+            onClick={() => onOpenFocus(sec.focusPointId!)}
+          >
+            Подробнее: {sec.focusPointLabel} →
+          </button>
+        )}
+        {sec.showClarifyButton && (
+          <div className="np-company-summary-clarify">
+            <button
+              type="button"
+              className="np-btn np-btn-primary np-company-summary-clarify-btn"
+              onClick={onClarify}
+            >
+              Уточнить знания
+            </button>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  const decision = summary.sections.find((s) => s.id === "decision");
+  const check = summary.sections.find((s) => s.id === "check");
+  const watch = summary.sections.find((s) => s.id === "watch");
+  const gaps = summary.sections.find((s) => s.id === "gaps");
 
   return (
     <div
@@ -2270,6 +2351,14 @@ function CompanySummaryModal({
               <div className="np-company-summary-updated">{summary.updatedAt}</div>
             </div>
           </div>
+          <div className="np-company-summary-head-actions">
+            <button
+              type="button"
+              className="np-share-trigger"
+              onClick={() => setShareOpen(true)}
+            >
+              Поделиться
+            </button>
           <button
             className="np-icon-btn np-company-summary-close"
             onClick={onClose}
@@ -2277,79 +2366,56 @@ function CompanySummaryModal({
           >
             <Icon name="close" size={18} />
           </button>
+          </div>
         </header>
 
         <div className="np-company-summary-body">
-          <section className="np-summary-lead">
-            <h3 className="np-summary-lead-title">{summary.leadTitle}</h3>
+          <section className="np-summary-lead-island">
+            <div className="np-summary-lead-kicker">{summary.leadTitle}</div>
+            <h3 className="np-summary-lead-headline">{summary.leadHeadline}</h3>
             <p className="np-summary-lead-text">{summary.leadText}</p>
             <div className="np-summary-required-decision">
               <span className="np-summary-required-label">Требуется решение:</span>{" "}
-              <span>
-                {summary.requiredDecision.replace(/^Требуется решение:\s*/, "")}
-              </span>
+              <span>{summary.requiredDecision.replace(/^Требуется решение:\s*/, "")}</span>
             </div>
+            {summary.secondaryStatuses.length > 0 && (
+              <div className="np-summary-secondary-row">
+                {summary.secondaryStatuses.map((s, i) => (
+                  <span key={i} className={`np-summary-secondary np-summary-secondary--${s.tone}`}>
+                    <span className="np-summary-secondary-dot" aria-hidden>●</span>
+                    <span className="np-summary-secondary-label">{s.label}</span>
+                    <span className="np-summary-secondary-sep" aria-hidden>·</span>
+                    <span className="np-summary-secondary-text">{s.text}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </section>
 
-          <div className="np-summary-since">
-            <span className="np-summary-since-dot" aria-hidden>●</span>
-            <span>{summary.sinceLastVisit}</span>
-          </div>
-
-          <div className="np-summary-stream">
-            {summary.sections.map((sec) => (
-              <section
-                key={sec.id}
-                className={`np-summary-block np-summary-block--${sec.tone}`}
-              >
-                <h3 className={`np-summary-block-title np-summary-block-title--${sec.tone}`}>
-                  {sec.title}
-                </h3>
-                <p className="np-company-summary-text">{sec.text}</p>
-                {sec.actionLabel && sec.actionText && (
-                  <div className="np-summary-action-line">
-                    <span className={`np-summary-action-label np-summary-action-label--${sec.tone}`}>
-                      {sec.actionLabel}:
-                    </span>{" "}
-                    <span>{sec.actionText}</span>
-                  </div>
-                )}
-                {sec.sources.length > 0 && (
-                  <div className="np-summary-source-tags">
-                    {sec.sources.map((s, i) => (
-                      <button
-                        key={`${sec.id}-src-${i}`}
-                        type="button"
-                        className="np-summary-source-tag"
-                        onClick={() => onOpenSource(s.sourceId)}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {sec.focusPointId && sec.focusPointLabel && (
-                  <button
-                    type="button"
-                    className="np-summary-focus-link"
-                    onClick={() => onOpenFocus(sec.focusPointId!)}
-                  >
-                    Подробнее: {sec.focusPointLabel} →
-                  </button>
-                )}
-                {sec.showClarifyButton && (
-                  <div className="np-company-summary-clarify">
-                    <button
-                      type="button"
-                      className="np-btn np-btn-primary np-company-summary-clarify-btn"
-                      onClick={onClarify}
-                    >
-                      Уточнить знания
-                    </button>
-                  </div>
-                )}
-              </section>
-            ))}
+          <div className="np-summary-details">
+            <h3 className="np-summary-details-title">Ситуация в деталях</h3>
+            <div className="np-summary-details-grid">
+              {decision && (
+                <section className={`np-summary-island np-summary-island--wide np-summary-island--${decision.tone}`}>
+                  {sectionCompact(decision)}
+                </section>
+              )}
+              {check && (
+                <section className={`np-summary-island np-summary-island--${check.tone}`}>
+                  {sectionCompact(check)}
+                </section>
+              )}
+              {watch && (
+                <section className={`np-summary-island np-summary-island--${watch.tone}`}>
+                  {sectionCompact(watch)}
+                </section>
+              )}
+              {gaps && (
+                <section className={`np-summary-island np-summary-island--wide np-summary-island--${gaps.tone}`}>
+                  {sectionCompact(gaps)}
+                </section>
+              )}
+            </div>
           </div>
         </div>
 
@@ -2389,31 +2455,36 @@ function CompanySummaryModal({
                 </button>
               </div>
               <div className="np-summary-source-body">
-                {supportedClaim && (
-                  <section className="np-summary-source-block np-summary-source-block--claim">
-                    <h4>Подтверждает в сводке</h4>
-                    <p>«{supportedClaim}»</p>
-                  </section>
-                )}
-                <section className="np-summary-source-block">
-                  <h4>Содержание</h4>
-                  <p>{source.excerpt}</p>
-                </section>
-                <section className="np-summary-source-block">
-                  <h4>Как источник связан с выводом</h4>
-                  <p>{source.relation}</p>
-                </section>
-                <button
-                  className="np-btn np-btn-primary"
-                  onClick={() =>
+                <SourceCardContent
+                  source={source}
+                  supportedClaim={supportedClaim}
+                  relation={sourceRelation}
+                  onOpen={() =>
                     onToast("Открытие источника в этом прототипе пока не реализовано")
                   }
-                >
-                  Открыть источник
-                </button>
+                />
               </div>
             </aside>
           </div>
+        )}
+        {shareOpen && (
+          <ShareDrawer
+            kind="summary"
+            title="Отправить сводку"
+            preview={{
+              status: "Требуется решение",
+              statusTone: "orange",
+              headline: summary.leadHeadline,
+              action: summary.requiredDecision,
+              actualAt: summary.updatedAt.replace(/^Актуально на\s*/, ""),
+            }}
+            onClose={() => setShareOpen(false)}
+            onSent={(n) => {
+              setShareOpen(false);
+              if (n < 0) onToast("Ссылка скопирована");
+              else onToast(`Сводка отправлена · ${n}`);
+            }}
+          />
         )}
       </div>
     </div>
