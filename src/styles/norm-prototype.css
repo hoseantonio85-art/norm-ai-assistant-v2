@@ -3002,15 +3002,19 @@
 .np-risk-chart-section {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 16px;
+  gap: 12px;
   align-items: stretch;
-}
-.np-risk-chart-island {
-  background: #f6f7f9;
+  background: #f4f5f7;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
+  padding: 12px;
+}
+.np-risk-chart-island {
+  background: #fff;
+  border: 1px solid #eef0f4;
+  border-radius: 12px;
   box-shadow: none;
-  padding: 28px 32px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
