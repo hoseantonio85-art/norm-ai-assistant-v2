@@ -1827,6 +1827,14 @@ function CompanySummaryModal({
   }, [activeSourceId, onClose, onCloseSource, focusOnTop]);
 
   const source = activeSourceId ? SOURCES_INDEX[activeSourceId] : null;
+  const supportedClaim = React.useMemo(() => {
+    if (!activeSourceId) return null;
+    for (const sec of summary.sections) {
+      const found = sec.sources.find((s) => s.sourceId === activeSourceId);
+      if (found) return found.supportedClaim;
+    }
+    return null;
+  }, [activeSourceId, summary.sections]);
 
   return (
     <div
@@ -1967,6 +1975,12 @@ function CompanySummaryModal({
                 </button>
               </div>
               <div className="np-summary-source-body">
+                {supportedClaim && (
+                  <section className="np-summary-source-block np-summary-source-block--claim">
+                    <h4>Подтверждает в сводке</h4>
+                    <p>«{supportedClaim}»</p>
+                  </section>
+                )}
                 <section className="np-summary-source-block">
                   <h4>Содержание</h4>
                   <p>{source.excerpt}</p>
