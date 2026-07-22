@@ -1983,6 +1983,7 @@
   justify-content: center;
   padding: 24px;
 }
+.np-focus-backdrop--over-summary { z-index: 1100; }
 .np-focus-modal {
   position: relative;
   width: min(1080px, 92vw);
