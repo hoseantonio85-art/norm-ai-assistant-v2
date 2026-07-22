@@ -2615,7 +2615,7 @@ export default function NormPrototype() {
         ) : (
         <div className="np-page-container">
         <h1 className="np-hello">
-          <span className="np-hello-line">Привет, Кирилл!</span>
+          <span className="np-hello-line">Привет, Сергей!</span>
           <button
             type="button"
             className="np-hello-summary"
