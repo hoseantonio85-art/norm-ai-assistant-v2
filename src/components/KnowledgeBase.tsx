@@ -786,3 +786,51 @@ function currentOverrideFrom(
   }
   return { sources: [], evidence: [] };
 }
+
+function KbSourcesDrawer({
+  knowledge,
+  onClose,
+  onDeleteSource,
+  onToast,
+}: {
+  knowledge: UniversalKnowledge;
+  onClose: () => void;
+  onDeleteSource: (id: string) => void;
+  onToast: (m: string) => void;
+}) {
+  const sources = knowledge.sources || [];
+  const evidence = knowledge.metadata?.sourceEvidence || [];
+  const uniSources = useMemo(
+    () =>
+      sources.map((s) =>
+        knowledgeSourceToUni(s, evidence.find((e) => e.sourceId === s.id)),
+      ),
+    [sources, evidence],
+  );
+  const initial: string | "list" | null =
+    uniSources.length === 0 ? "list" : uniSources.length === 1 ? uniSources[0].id : "list";
+  const [activeId, setActiveId] = useState<string | "list" | null>(initial);
+
+  return (
+    <SourceDrawer
+      sources={uniSources}
+      activeId={activeId}
+      mode="knowledge"
+      listTitle="Источники знания"
+      onOpen={(id) => setActiveId(id)}
+      onClose={onClose}
+      editable
+      onDelete={(s) => {
+        onDeleteSource(s.id);
+        onToast("Связь источника удалена");
+        setActiveId("list");
+      }}
+      onExternal={(s) => {
+        if (s.url) window.open(s.url, "_blank", "noopener,noreferrer");
+        else if (s.file?.downloadUrl)
+          window.open(s.file.downloadUrl, "_blank", "noopener,noreferrer");
+        else onToast("Открытие источника в этом прототипе пока не реализовано");
+      }}
+    />
+  );
+}
