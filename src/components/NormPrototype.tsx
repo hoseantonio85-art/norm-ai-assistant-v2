@@ -2416,7 +2416,7 @@ function CompanySummaryModal({
           <div className="np-company-summary-head-main">
             <LogoMark size={32} />
             <div>
-              <h2 className="np-company-summary-title">Ситуация в компании</h2>
+              <h1 className="np-company-summary-title">Ситуация в компании</h1>
               <div className="np-company-summary-updated">{summary.updatedAt}</div>
             </div>
           </div>
