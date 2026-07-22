@@ -2108,13 +2108,13 @@ export default function NormPrototype() {
         ) : (
         <div className="np-page-container">
         <h1 className="np-hello">
-          — Привет, Кирилл!{" "}
+          <span className="np-hello-line">Привет, Кирилл!</span>
           <button
             type="button"
             className="np-hello-summary"
             onClick={() => setSummaryOpen(true)}
           >
-            Ситуация в компании{" "}
+            <span className="np-hello-summary-lead">Ситуация в компании </span>
             <span className="np-hello-summary-status">требует внимания</span>
             <span className="np-hello-summary-arrow" aria-hidden>→</span>
           </button>
