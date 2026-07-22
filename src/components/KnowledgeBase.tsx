@@ -758,13 +758,11 @@ export default function KnowledgeBase({
       )}
 
       {drawerKnowledge && (
-        <KnowledgeSourcesDrawer
-          knowledgeTitle={drawerKnowledge.title}
-          sources={drawerKnowledge.sources || []}
-          evidence={drawerKnowledge.metadata?.sourceEvidence || []}
+        <KbSourcesDrawer
+          knowledge={drawerKnowledge}
           onClose={() => setSourcesFor(null)}
-          onUpdateSource={(s, ev) => updateSource(drawerKnowledge.id, s, ev)}
           onDeleteSource={(id) => deleteSource(drawerKnowledge.id, id)}
+          onToast={(m) => setToast(m)}
         />
       )}
 
