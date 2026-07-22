@@ -1858,53 +1858,77 @@ function CompanySummaryModal({
         </header>
 
         <div className="np-company-summary-body">
-          {summary.sections.map((sec) => (
-            <section key={sec.id} className="np-company-summary-section">
-              <h3 className="np-company-summary-section-title">{sec.title}</h3>
-              {sec.paragraphs.map((p) => (
-                <div key={p.id} className="np-company-summary-paragraph">
-                  {p.subtitle && (
-                    <div className="np-company-summary-subtitle">{p.subtitle}</div>
-                  )}
-                  <p className="np-company-summary-text">{p.text}</p>
-                  {p.sources.length > 0 && (
-                    <div className="np-summary-source-tags">
-                      {p.sources.map((s, i) => (
-                        <button
-                          key={`${p.id}-src-${i}`}
-                          type="button"
-                          className="np-summary-source-tag"
-                          onClick={() => onOpenSource(s.sourceId)}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {p.focusPointId && p.focusPointLabel && (
+          <section className="np-summary-lead">
+            <h3 className="np-summary-lead-title">{summary.leadTitle}</h3>
+            <p className="np-summary-lead-text">{summary.leadText}</p>
+            <div className="np-summary-required-decision">
+              <span className="np-summary-required-label">Требуется решение:</span>{" "}
+              <span>
+                {summary.requiredDecision.replace(/^Требуется решение:\s*/, "")}
+              </span>
+            </div>
+          </section>
+
+          <div className="np-summary-since">
+            <span className="np-summary-since-dot" aria-hidden>●</span>
+            <span>{summary.sinceLastVisit}</span>
+          </div>
+
+          <div className="np-summary-stream">
+            {summary.sections.map((sec) => (
+              <section
+                key={sec.id}
+                className={`np-summary-block np-summary-block--${sec.tone}`}
+              >
+                <h3 className={`np-summary-block-title np-summary-block-title--${sec.tone}`}>
+                  {sec.title}
+                </h3>
+                <p className="np-company-summary-text">{sec.text}</p>
+                {sec.actionLabel && sec.actionText && (
+                  <div className="np-summary-action-line">
+                    <span className={`np-summary-action-label np-summary-action-label--${sec.tone}`}>
+                      {sec.actionLabel}:
+                    </span>{" "}
+                    <span>{sec.actionText}</span>
+                  </div>
+                )}
+                {sec.sources.length > 0 && (
+                  <div className="np-summary-source-tags">
+                    {sec.sources.map((s, i) => (
+                      <button
+                        key={`${sec.id}-src-${i}`}
+                        type="button"
+                        className="np-summary-source-tag"
+                        onClick={() => onOpenSource(s.sourceId)}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {sec.focusPointId && sec.focusPointLabel && (
+                  <button
+                    type="button"
+                    className="np-summary-focus-link"
+                    onClick={() => onOpenFocus(sec.focusPointId!)}
+                  >
+                    Подробнее: {sec.focusPointLabel} →
+                  </button>
+                )}
+                {sec.showClarifyButton && (
+                  <div className="np-company-summary-clarify">
                     <button
                       type="button"
-                      className="np-summary-focus-link"
-                      onClick={() => onOpenFocus(p.focusPointId!)}
+                      className="np-btn np-btn-primary np-company-summary-clarify-btn"
+                      onClick={onClarify}
                     >
-                      Подробнее: {p.focusPointLabel} →
+                      Уточнить знания
                     </button>
-                  )}
-                  {sec.id === "gaps" && (
-                    <div className="np-company-summary-clarify">
-                      <button
-                        type="button"
-                        className="np-btn np-btn-primary np-company-summary-clarify-btn"
-                        onClick={onClarify}
-                      >
-                        Уточнить знания
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </section>
-          ))}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
         </div>
 
         <footer className="np-company-summary-footer">
