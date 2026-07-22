@@ -1,0 +1,434 @@
+import { useEffect, useState } from "react";
+
+// ----- Universal source model -----
+
+export type SourceType =
+  | "document"
+  | "news"
+  | "law"
+  | "website"
+  | "internal_system";
+
+export interface UniSource {
+  id: string;
+  type: SourceType;
+  typeLabel: string;
+  title: string;
+  provider?: string | null;
+  domain?: string | null;
+  publishedAt?: string | null;
+  validAt?: string | null;
+  quote?: string | null;
+  relationToConclusion?: string | null;
+  supportedClaim?: string | null;
+  location?: {
+    page?: number | null;
+    section?: string | null;
+    article?: string | null;
+    paragraph?: string | null;
+    sheet?: string | null;
+    range?: string | null;
+    timestamp?: string | null;
+    recordId?: string | null;
+  } | null;
+  file?: {
+    name: string;
+    format?: string | null;
+    size?: string | null;
+    downloadUrl?: string | null;
+  } | null;
+  url?: string | null;
+}
+
+function primaryActionLabel(type: SourceType): string {
+  switch (type) {
+    case "document": return "Открыть документ";
+    case "news": return "Открыть новость ↗";
+    case "law": return "Открыть текст закона ↗";
+    case "website": return "Открыть страницу ↗";
+    case "internal_system": return "Открыть в системе";
+  }
+}
+
+function locationLine(loc: UniSource["location"]): string | null {
+  if (!loc) return null;
+  const parts: string[] = [];
+  if (loc.page != null) parts.push(`страница ${loc.page}`);
+  if (loc.section) parts.push(loc.section);
+  if (loc.article) parts.push(loc.article);
+  if (loc.paragraph) parts.push(loc.paragraph);
+  if (loc.sheet) parts.push(`лист «${loc.sheet}»`);
+  if (loc.range) parts.push(`строки ${loc.range}`);
+  if (loc.timestamp) parts.push(loc.timestamp);
+  if (loc.recordId) parts.push(`запись ${loc.recordId}`);
+  return parts.length ? parts.join(", ") : null;
+}
+
+function headerMeta(s: UniSource): string {
+  const bits: string[] = [];
+  if (s.provider) bits.push(s.provider);
+  if (s.domain) bits.push(s.domain);
+  if (s.publishedAt) bits.push(s.publishedAt);
+  else if (s.validAt) bits.push(`актуально на ${s.validAt}`);
+  return bits.join(" · ");
+}
+
+// ----- Detail view -----
+
+function SourceDetail({
+  s,
+  mode,
+  editable,
+  onExternal,
+  onEdit,
+  onDelete,
+}: {
+  s: UniSource;
+  mode: "conclusion" | "knowledge";
+  editable?: boolean;
+  onExternal: (s: UniSource) => void;
+  onEdit?: (s: UniSource) => void;
+  onDelete?: (s: UniSource) => void;
+}) {
+  const loc = locationLine(s.location);
+  return (
+    <div className="np-sd-detail">
+      {s.file && (
+        <div className="np-sd-file">
+          <span className="np-sd-file-icon" aria-hidden>📄</span>
+          <div className="np-sd-file-main">
+            <div className="np-sd-file-name">{s.file.name}</div>
+            <div className="np-sd-file-meta">
+              {[s.file.format, s.file.size, s.validAt].filter(Boolean).join(" · ")}
+            </div>
+          </div>
+          {s.file.downloadUrl && (
+            <a className="np-sd-linkbtn" href={s.file.downloadUrl} download>
+              Скачать
+            </a>
+          )}
+        </div>
+      )}
+
+      <div className="np-sd-block">
+        <div className="np-sd-label">Использованный фрагмент</div>
+        {s.quote ? (
+          <div className="np-sd-quote">«{s.quote}»</div>
+        ) : (
+          <div className="np-sd-quote np-sd-quote--muted">
+            Точный фрагмент источника пока не добавлен
+          </div>
+        )}
+      </div>
+
+      {loc && (
+        <div className="np-sd-block">
+          <div className="np-sd-label">Место в источнике</div>
+          <div className="np-sd-locator">{loc}</div>
+        </div>
+      )}
+
+      {mode === "conclusion" && s.supportedClaim && (
+        <div className="np-sd-block">
+          <div className="np-sd-label">Подтверждает в выводе</div>
+          <div className="np-sd-quote np-sd-quote--claim">«{s.supportedClaim}»</div>
+        </div>
+      )}
+
+      {mode === "conclusion" && s.relationToConclusion && (
+        <div className="np-sd-block">
+          <div className="np-sd-label">Как это связано с выводом</div>
+          <div className="np-sd-relation">{s.relationToConclusion}</div>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className="np-btn np-btn-primary np-sd-primary"
+        onClick={() => onExternal(s)}
+      >
+        {primaryActionLabel(s.type)}
+      </button>
+
+      {editable && (
+        <div className="np-sd-edit-row">
+          {onEdit && (
+            <button type="button" className="np-sd-linkbtn" onClick={() => onEdit(s)}>
+              редактировать
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              className="np-sd-linkbtn np-sd-linkbtn--danger"
+              onClick={() => onDelete(s)}
+            >
+              удалить
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ----- Universal drawer -----
+
+export interface SourceDrawerProps {
+  sources: UniSource[];
+  activeId: string | "list" | null;
+  mode: "conclusion" | "knowledge";
+  listTitle?: string;
+  onOpen: (id: string | "list") => void;
+  onClose: () => void;
+  onExternal?: (s: UniSource) => void;
+  editable?: boolean;
+  onEdit?: (s: UniSource) => void;
+  onDelete?: (s: UniSource) => void;
+}
+
+export function SourceDrawer({
+  sources,
+  activeId,
+  mode,
+  listTitle,
+  onOpen,
+  onClose,
+  onExternal,
+  editable,
+  onEdit,
+  onDelete,
+}: SourceDrawerProps) {
+  useEffect(() => {
+    if (activeId === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeId, onClose]);
+
+  if (activeId === null) return null;
+
+  const single = sources.length === 1;
+  const showList = activeId === "list" || (activeId !== "list" && !sources.find((s) => s.id === activeId));
+  const selected =
+    activeId !== "list" ? sources.find((s) => s.id === activeId) ?? null : null;
+
+  const defaultExternal = (s: UniSource) => {
+    if (s.url) {
+      window.open(s.url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (s.file?.downloadUrl) {
+      window.open(s.file.downloadUrl, "_blank", "noopener,noreferrer");
+    }
+  };
+  const handleExternal = onExternal ?? defaultExternal;
+
+  const heading =
+    mode === "knowledge" ? "Источники знания" : listTitle ?? "На чём основан вывод";
+
+  return (
+    <div className="np-sd-backdrop" onClick={onClose}>
+      <aside
+        className="np-sd-drawer"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={selected ? selected.title : heading}
+      >
+        <div className="np-sd-head">
+          <div className="np-sd-head-main">
+            {selected && !single && (
+              <button
+                type="button"
+                className="np-sd-back"
+                onClick={() => onOpen("list")}
+              >
+                ← К списку
+              </button>
+            )}
+            <div className="np-sd-type">
+              {selected ? selected.typeLabel : heading}
+            </div>
+            <h3 className="np-sd-title">
+              {selected ? selected.title : `${heading} · ${sources.length}`}
+            </h3>
+            {selected && (
+              <div className="np-sd-submeta">{headerMeta(selected)}</div>
+            )}
+          </div>
+          <button className="np-icon-btn np-sd-close" onClick={onClose} aria-label="Закрыть">
+            ✕
+          </button>
+        </div>
+        <div className="np-sd-body">
+          {selected ? (
+            <SourceDetail
+              s={selected}
+              mode={mode}
+              editable={editable}
+              onExternal={handleExternal}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ) : showList ? (
+            <ul className="np-sd-list">
+              {sources.map((s) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    className="np-sd-list-item"
+                    onClick={() => onOpen(s.id)}
+                  >
+                    <div className="np-sd-list-main">
+                      <span className="np-sd-list-type">{s.typeLabel}</span>
+                      <span className="np-sd-list-title">{s.title}</span>
+                      {headerMeta(s) && (
+                        <span className="np-sd-list-meta">{headerMeta(s)}</span>
+                      )}
+                    </div>
+                    <span className="np-sd-list-chev" aria-hidden>→</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+// ----- Adapters -----
+
+export interface FocusSourceLike {
+  id?: string;
+  type: string;
+  title: string;
+  date?: string;
+  excerpt: string;
+  relation: string;
+  document?: {
+    fileName: string;
+    mimeType?: string;
+    fileSize?: string;
+    updatedAt?: string;
+    downloadUrl?: string;
+  };
+  quote?: string;
+  locator?: {
+    page?: number;
+    section?: string;
+    sheet?: string;
+    range?: string;
+  };
+}
+
+function classifyFocusType(s: FocusSourceLike): { type: SourceType; typeLabel: string } {
+  if (s.document) return { type: "document", typeLabel: "Документ" };
+  const t = (s.type || "").toLowerCase();
+  if (t.includes("новост")) return { type: "news", typeLabel: "Новость" };
+  if (t.includes("сайт") || t.includes("страниц")) return { type: "website", typeLabel: "Страница сайта" };
+  if (t.includes("закон") || t.includes("норматив")) return { type: "law", typeLabel: "Нормативный акт" };
+  return { type: "internal_system", typeLabel: s.type || "Внутренняя запись" };
+}
+
+export function focusSourceToUni(
+  s: FocusSourceLike,
+  opts?: { supportedClaim?: string | null },
+): UniSource {
+  const { type, typeLabel } = classifyFocusType(s);
+  return {
+    id: s.id || s.title,
+    type,
+    typeLabel,
+    title: s.title,
+    provider: s.document ? "Внутренняя система" : null,
+    validAt: s.date || s.document?.updatedAt || null,
+    publishedAt: type === "news" ? s.date || null : null,
+    quote: s.quote || s.excerpt || null,
+    relationToConclusion: s.relation || null,
+    supportedClaim: opts?.supportedClaim ?? null,
+    location: s.locator
+      ? {
+          page: s.locator.page ?? null,
+          section: s.locator.section ?? null,
+          sheet: s.locator.sheet ?? null,
+          range: s.locator.range ?? null,
+        }
+      : null,
+    file: s.document
+      ? {
+          name: s.document.fileName,
+          format: s.document.mimeType || null,
+          size: s.document.fileSize || null,
+          downloadUrl: s.document.downloadUrl || null,
+        }
+      : null,
+  };
+}
+
+// KnowledgeSource + optional evidence → UniSource
+export function knowledgeSourceToUni(
+  s: {
+    id: string;
+    type: string;
+    name: string;
+    dataset?: string | null;
+    documentName?: string | null;
+    fileName?: string | null;
+    mimeType?: string | null;
+    downloadUrl?: string | null;
+    url?: string | null;
+    actualAt?: string | null;
+  },
+  ev?: {
+    quote?: string | null;
+    locator?: {
+      page?: number | null;
+      section?: string | null;
+      field?: string | null;
+      dataset?: string | null;
+      recordId?: string | null;
+      sheet?: string | null;
+      range?: string | null;
+    };
+  },
+): UniSource {
+  const isDoc = !!(s.fileName || s.documentName);
+  const isUrl = !!s.url && !isDoc;
+  const type: SourceType = isDoc ? "document" : isUrl ? "website" : "internal_system";
+  const typeLabel = isDoc ? "Документ" : isUrl ? "Страница сайта" : s.type || "Внутренняя запись";
+  return {
+    id: s.id,
+    type,
+    typeLabel,
+    title: s.documentName || s.fileName || s.name,
+    provider: s.dataset || null,
+    domain: s.url ? new URL(s.url, "https://x").hostname.replace(/^x$/, "") : null,
+    validAt: s.actualAt || null,
+    quote: ev?.quote || null,
+    location: ev?.locator
+      ? {
+          page: ev.locator.page ?? null,
+          section: ev.locator.section ?? null,
+          sheet: ev.locator.sheet ?? null,
+          range: ev.locator.range ?? null,
+          recordId: ev.locator.recordId ?? null,
+        }
+      : null,
+    file: isDoc && s.fileName
+      ? {
+          name: s.fileName,
+          format: s.mimeType || null,
+          downloadUrl: s.downloadUrl || null,
+        }
+      : null,
+    url: s.url || null,
+  };
+}
