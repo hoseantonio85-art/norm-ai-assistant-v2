@@ -732,6 +732,17 @@ const COMPANY_SUMMARY: CompanySummary = {
       showClarifyButton: true,
     },
   ],
+  meta: {
+    period: "30 дней",
+    incidents: { value: 7, label: "инцидентов поставок" },
+    externalSignals: { value: 1, label: "новый внешний сигнал" },
+    improvingMeasures: { value: 1, label: "мера показывает улучшение" },
+    highRisks: { value: 18, label: "высоких рисков" },
+    risksWithoutMeasures: { value: 6, label: "без эффективных мер" },
+    sourcesUsed: 10,
+    knowledgeGaps: 3,
+    updatedAtShort: "22 июля 2026, 09:30",
+  },
 };
 
 function Donut({ percent, color }: { percent: number; color: string }) {
