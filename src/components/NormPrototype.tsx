@@ -2213,6 +2213,7 @@ export default function NormPrototype() {
           onOpenSource={(i) => setFocusSourceIdx(i)}
           onCloseSource={() => setFocusSourceIdx(null)}
           onClose={() => { setFocusSourceIdx(null); setFocusIdx(null); }}
+          overSummary={summaryOpen}
           onToast={(m) => setToast(m)}
           onDiscuss={(q) => {
             setFocusSourceIdx(null);
