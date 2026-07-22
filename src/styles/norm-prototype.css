@@ -20,7 +20,12 @@
 }
 
 /* ====== Company summary entry & modal ====== */
+.np-hello-line {
+  display: block;
+}
 .np-hello-summary {
+  display: block;
+  margin-top: 6px;
   background: none;
   border: none;
   padding: 0;
@@ -29,18 +34,27 @@
   cursor: pointer;
   text-align: left;
   line-height: inherit;
-  display: inline;
 }
-.np-hello-summary:hover .np-hello-summary-status,
-.np-hello-summary:hover .np-hello-summary-arrow {
-  text-decoration: underline;
-}
+.np-hello-summary-lead { color: inherit; }
 .np-hello-summary-status,
 .np-hello-summary-arrow {
   color: #D97706;
   font-weight: 600;
+  transition: color 0.15s ease, transform 0.15s ease;
+  display: inline-block;
 }
 .np-hello-summary-arrow { margin-left: 6px; }
+.np-hello-summary:hover .np-hello-summary-status { color: #B45309; }
+.np-hello-summary:hover .np-hello-summary-arrow {
+  color: #B45309;
+  transform: translateX(4px);
+}
+.np-hello-summary:focus { outline: none; }
+.np-hello-summary:focus-visible {
+  outline: 2px solid #D97706;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
 
 .np-company-summary-backdrop {
   position: fixed;
@@ -166,6 +180,84 @@
 .np-company-summary-clarify-btn {
   font-size: 13px;
   padding: 8px 14px;
+}
+
+/* New summary structure */
+.np-summary-lead {
+  background: #ffffff;
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.np-summary-lead-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+.np-summary-lead-text {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #1f2937;
+  margin: 0 0 12px;
+}
+.np-summary-required-decision {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+}
+.np-summary-required-label {
+  color: #D97706;
+  font-weight: 600;
+}
+.np-summary-since {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #6b7280;
+  padding: 0 4px;
+}
+.np-summary-since-dot {
+  color: #9ca3af;
+  font-size: 10px;
+  line-height: 1;
+}
+.np-summary-stream {
+  display: flex;
+  flex-direction: column;
+}
+.np-summary-block {
+  padding: 20px 4px;
+  border-top: 1px solid #eceef2;
+}
+.np-summary-block:first-child { border-top: none; padding-top: 6px; }
+.np-summary-block-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+.np-summary-block-title--orange { color: #D97706; }
+.np-summary-block-title--blue { color: #4f46e5; }
+.np-summary-block-title--green { color: #059669; }
+.np-summary-block-title--neutral { color: #6b7280; }
+.np-summary-action-line {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+}
+.np-summary-action-label { font-weight: 600; }
+.np-summary-action-label--orange { color: #D97706; }
+.np-summary-action-label--blue { color: #4f46e5; }
+.np-summary-action-label--green { color: #059669; }
+.np-summary-action-label--neutral { color: #374151; }
+.np-summary-source-block--claim p {
+  font-style: italic;
+  color: #334155;
 }
 .np-company-summary-footer {
   background: #ffffff;
