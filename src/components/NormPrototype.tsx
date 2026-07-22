@@ -1975,6 +1975,16 @@ function FocusPointModal({
   const previewSources = point.sources.slice(0, 2);
   const remainingSources = Math.max(0, point.sources.length - 2);
 
+  const uniSources = useMemo(
+    () => point.sources.map((s) => focusSourceToUni(s)),
+    [point.sources],
+  );
+  const sdActiveId: string | "list" | null = !drawerOpen
+    ? null
+    : selectedIdx !== null
+      ? uniSources[selectedIdx]?.id ?? "list"
+      : "list";
+
   return (
     <div
       className={`np-focus-backdrop${overSummary ? " np-focus-backdrop--over-summary" : ""}`}
