@@ -1595,6 +1595,282 @@ function AssistantModal({ initialQuery, onClose, onToast }: { initialQuery: stri
   );
 }
 
+function SourceCardContent({
+  source,
+  supportedClaim,
+  relation,
+  onOpen,
+}: {
+  source: FocusSource;
+  supportedClaim?: string | null;
+  relation?: string | null;
+  onOpen: () => void;
+}) {
+  const doc = source.document;
+  const quote = source.quote ?? source.excerpt;
+  const rel = relation ?? source.relation;
+  const locParts: string[] = [];
+  if (source.locator) {
+    if (source.locator.sheet) locParts.push(`Лист «${source.locator.sheet}»`);
+    if (source.locator.range) locParts.push(`строки ${source.locator.range}`);
+    if (source.locator.section) locParts.push(source.locator.section);
+    if (source.locator.page) locParts.push(`страница ${source.locator.page}`);
+  }
+  const hasLocator = locParts.length > 0;
+  return (
+    <div className="np-src-card">
+      {doc ? (
+        <div className="np-src-doc">
+          <span className="np-src-doc-icon" aria-hidden>📄</span>
+          <div className="np-src-doc-main">
+            <div className="np-src-doc-name">{doc.fileName}</div>
+            <div className="np-src-doc-meta">
+              {[doc.mimeType, doc.fileSize, doc.updatedAt].filter(Boolean).join(" · ")}
+            </div>
+          </div>
+          {doc.downloadUrl && (
+            <a className="np-src-linkbtn" href={doc.downloadUrl} download>Скачать</a>
+          )}
+        </div>
+      ) : (
+        <div className="np-src-obj">
+          <div className="np-src-obj-type">{source.type}</div>
+          <div className="np-src-obj-name">{source.title}</div>
+          {source.date && <div className="np-src-obj-meta">Актуально: {source.date}</div>}
+        </div>
+      )}
+      <div className="np-src-block">
+        <div className="np-src-block-label">Цитата</div>
+        {quote ? (
+          <div className="np-src-quote">«{quote}»</div>
+        ) : (
+          <div className="np-src-quote np-src-quote--muted">Точный фрагмент источника пока не добавлен</div>
+        )}
+      </div>
+      {hasLocator && (
+        <div className="np-src-block">
+          <div className="np-src-block-label">Место в источнике</div>
+          <div className="np-src-locator">{locParts.join(", ")}</div>
+        </div>
+      )}
+      {supportedClaim && (
+        <div className="np-src-block">
+          <div className="np-src-block-label">Подтверждает в сводке</div>
+          <div className="np-src-quote np-src-quote--claim">«{supportedClaim}»</div>
+        </div>
+      )}
+      {rel && (
+        <div className="np-src-block">
+          <div className="np-src-block-label">Как источник связан с выводом</div>
+          <div>{rel}</div>
+        </div>
+      )}
+      <button className="np-btn np-btn-primary np-src-open" onClick={onOpen}>
+        Открыть источник
+      </button>
+    </div>
+  );
+}
+
+type ShareKind = "summary" | "fp-delivery" | "fp-supply" | "fp-it";
+interface SharePreview {
+  status: string;
+  statusTone: "orange" | "blue" | "green" | "neutral";
+  headline: string;
+  action?: string;
+  actualAt: string;
+  detailLabel?: string;
+  onOpenDetail?: () => void;
+}
+function ShareDrawer({
+  kind,
+  title,
+  preview,
+  onClose,
+  onSent,
+}: {
+  kind: ShareKind;
+  title: string;
+  preview: SharePreview;
+  onClose: () => void;
+  onSent: (n: number) => void;
+}) {
+  const suggested = pickSuggested(kind);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState("");
+  const [comment, setComment] = useState("");
+  const toggle = (id: string) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? RECIPIENTS.filter(
+        (r) =>
+          r.name.toLowerCase().includes(q) ||
+          r.role.toLowerCase().includes(q) ||
+          r.dept.toLowerCase().includes(q),
+      )
+    : [];
+  const selectedList = RECIPIENTS.filter((r) => selected.has(r.id));
+  return (
+    <div className="np-share-backdrop" onClick={onClose}>
+      <aside
+        className="np-share-drawer"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="np-share-head">
+          <div>
+            <div className="np-share-eyebrow">Пересылка</div>
+            <h3 className="np-share-title">{title}</h3>
+          </div>
+          <button className="np-icon-btn" onClick={onClose} aria-label="Закрыть">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+        <div className="np-share-body">
+          <section className="np-share-preview">
+            <div className={`np-share-preview-status np-share-preview-status--${preview.statusTone}`}>
+              {preview.status}
+            </div>
+            <div className="np-share-preview-headline">{preview.headline}</div>
+            {preview.action && (
+              <div className="np-share-preview-action">{preview.action}</div>
+            )}
+            <div className="np-share-preview-meta">Актуально: {preview.actualAt}</div>
+            {preview.detailLabel && preview.onOpenDetail && (
+              <button
+                type="button"
+                className="np-share-preview-link"
+                onClick={preview.onOpenDetail}
+              >
+                {preview.detailLabel} →
+              </button>
+            )}
+          </section>
+
+          <section className="np-share-section">
+            <div className="np-share-section-title">Норм предлагает</div>
+            <ul className="np-share-list">
+              {suggested.map((s) => {
+                const r = RECIPIENTS.find((x) => x.id === s.id)!;
+                const on = selected.has(r.id);
+                return (
+                  <li key={r.id} className="np-share-item">
+                    <div className="np-share-item-avatar">{r.initials}</div>
+                    <div className="np-share-item-main">
+                      <div className="np-share-item-name">{r.name}</div>
+                      <div className="np-share-item-role">{s.reason}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className={`np-share-add ${on ? "is-on" : ""}`}
+                      onClick={() => toggle(r.id)}
+                    >
+                      {on ? "Добавлен" : "Добавить"}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+
+          <section className="np-share-section">
+            <div className="np-share-section-title">Найти участника</div>
+            <input
+              className="np-share-input"
+              placeholder="Имя, роль или подразделение"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {q && (
+              <ul className="np-share-list">
+                {filtered.length === 0 && (
+                  <li className="np-share-empty">Никого не нашлось</li>
+                )}
+                {filtered.map((r) => {
+                  const on = selected.has(r.id);
+                  return (
+                    <li key={r.id} className="np-share-item">
+                      <div className="np-share-item-avatar">{r.initials}</div>
+                      <div className="np-share-item-main">
+                        <div className="np-share-item-name">{r.name}</div>
+                        <div className="np-share-item-role">{r.role} · {r.dept}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className={`np-share-add ${on ? "is-on" : ""}`}
+                        onClick={() => toggle(r.id)}
+                      >
+                        {on ? "Добавлен" : "Добавить"}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+
+          {selectedList.length > 0 && (
+            <section className="np-share-section">
+              <div className="np-share-section-title">Кому отправить · {selectedList.length}</div>
+              <div className="np-share-chips">
+                {selectedList.map((r) => (
+                  <span key={r.id} className="np-share-chip">
+                    {r.name}
+                    <button
+                      type="button"
+                      className="np-share-chip-x"
+                      onClick={() => toggle(r.id)}
+                      aria-label="Убрать"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="np-share-section">
+            <div className="np-share-section-title">Комментарий (необязательно)</div>
+            <textarea
+              className="np-share-textarea"
+              rows={3}
+              placeholder="Например: обратите внимание на пункт про резерв"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+          </section>
+        </div>
+
+        <div className="np-share-footer">
+          <button
+            type="button"
+            className="np-share-secondary"
+            onClick={() => onSent(-1)}
+          >
+            Скопировать ссылку
+          </button>
+          <button
+            type="button"
+            className="np-btn np-btn-primary np-share-send"
+            disabled={selectedList.length === 0}
+            onClick={() => onSent(selectedList.length)}
+          >
+            Отправить {selectedList.length > 0 ? `· ${selectedList.length}` : ""}
+          </button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
 function FocusPointModal({
   point,
   activeSourceIdx,
