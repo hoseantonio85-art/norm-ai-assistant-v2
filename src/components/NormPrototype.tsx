@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "../styles/norm-prototype.css";
 import KnowledgeBase from "./KnowledgeBase";
 import RiskObjectsChart, { RiskLossCards } from "./RiskObjectsChart";
+import { SourceDrawer, focusSourceToUni } from "./SourceDrawer";
 
 const LOSS_METRICS = {
   actual: { value: null as number | null, limitUsage: null as number | null, limitValue: null as number | null },
