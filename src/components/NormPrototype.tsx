@@ -3186,47 +3186,55 @@ function RiskDetailModal({
                 </button>
               </section>
 
-              <section className="np-risk-block">
-                <h3 className="np-risk-h3">Описание риска</h3>
-                <p className="np-risk-p">{risk.description}</p>
-              </section>
+              {risk.description && (
+                <section className="np-risk-block">
+                  <h3 className="np-risk-h3">Описание риска</h3>
+                  <p className="np-risk-p">{risk.description}</p>
+                </section>
+              )}
 
-              <section className="np-risk-block">
-                <h3 className="np-risk-h3">Риск-факторы</h3>
-                <div className="np-risk-sub">Это причины, которые могут привести к реализации риска.</div>
-                <ul className="np-risk-item-list">
-                  {risk.factors.map((f, i) => (
-                    <li key={i} className="np-risk-item np-risk-item--factor">
-                      <span className="np-risk-item-ic">ⓘ</span>{f}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {risk.factors && risk.factors.length > 0 && (
+                <section className="np-risk-block">
+                  <h3 className="np-risk-h3">Риск-факторы</h3>
+                  <div className="np-risk-sub">Это причины, которые могут привести к реализации риска.</div>
+                  <ul className="np-risk-item-list">
+                    {risk.factors.map((f, i) => (
+                      <li key={i} className="np-risk-item np-risk-item--factor">
+                        <span className="np-risk-item-ic">ⓘ</span>{f}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
-              <section className="np-risk-block">
-                <h3 className="np-risk-h3">Возможные последствия</h3>
-                <ul className="np-risk-item-list">
-                  {risk.consequences.map((c, i) => (
-                    <li key={i} className="np-risk-item np-risk-item--consequence">
-                      <span className="np-risk-item-ic">◆</span>{c}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {risk.consequences && risk.consequences.length > 0 && (
+                <section className="np-risk-block">
+                  <h3 className="np-risk-h3">Возможные последствия</h3>
+                  <ul className="np-risk-item-list">
+                    {risk.consequences.map((c, i) => (
+                      <li key={i} className="np-risk-item np-risk-item--consequence">
+                        <span className="np-risk-item-ic">◆</span>{c}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
-              <section className="np-risk-block">
-                <h3 className="np-risk-h3">Рекомендации</h3>
-                <ul className="np-risk-rec-list">
-                  {risk.recommendations.map((r, i) => (
-                    <li key={i} className="np-risk-rec">
-                      <span className="np-risk-rec-ic">✨</span>
-                      <span className="np-risk-rec-text">{r}</span>
-                      <button className="np-icon-btn" aria-label="Архив">🗑</button>
-                      <button className="np-risk-rec-btn" onClick={() => onToast("Мера снижения будет добавлена позже")}>Снизить риск</button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {risk.recommendations && risk.recommendations.length > 0 && (
+                <section className="np-risk-block">
+                  <h3 className="np-risk-h3">Рекомендации</h3>
+                  <ul className="np-risk-rec-list">
+                    {risk.recommendations.map((r, i) => (
+                      <li key={i} className="np-risk-rec">
+                        <span className="np-risk-rec-ic">✨</span>
+                        <span className="np-risk-rec-text">{r}</span>
+                        <button className="np-icon-btn" aria-label="Архив">🗑</button>
+                        <button className="np-risk-rec-btn" onClick={() => onToast("Мера снижения будет добавлена позже")}>Снизить риск</button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               <section className="np-risk-block">
                 <h3 className="np-risk-h3">Меры</h3>
