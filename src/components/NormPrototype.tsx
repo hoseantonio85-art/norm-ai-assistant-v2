@@ -3417,8 +3417,9 @@ function RisksPage({
   useEffect(() => { if (initialFilter) setFilter(initialFilter); }, [initialFilter]);
 
   const list = RISKS_REGISTRY.filter((r) => {
+    if (filter === "new") return !!r.isNew;
     if (filter === "high") return r.level === "high";
-    if (filter === "no-measures") return !r.hasEffectiveMeasures;
+    if (filter === "reassessed") return !!r.reassessed;
     return true;
   });
 
@@ -3456,12 +3457,12 @@ function RisksPage({
       <div className="np-risks-stats">
         <button
           type="button"
-          className={`np-risks-stat np-risks-stat--new ${filter === "all" ? "is-active" : ""}`}
-          onClick={() => setFilter("all")}
+          className={`np-risks-stat np-risks-stat--new ${filter === "new" ? "is-active" : ""}`}
+          onClick={() => setFilter("new")}
         >
           <div className="np-risks-stat-head">
             <div className="np-risks-stat-title">Новые риски</div>
-            <span className="np-risks-stat-badge np-risks-stat-badge--blue">4</span>
+            <span className="np-risks-stat-badge np-risks-stat-badge--blue">{RISKS_REGISTRY.filter(r => r.isNew).length}</span>
           </div>
           <div className="np-risks-stat-text">Норм обнаружил новые риски, можешь ознакомиться с ними.</div>
         </button>
@@ -3472,18 +3473,18 @@ function RisksPage({
         >
           <div className="np-risks-stat-head">
             <div className="np-risks-stat-title">Высокий уровень риска</div>
-            <span className="np-risks-stat-badge np-risks-stat-badge--red">1</span>
+            <span className="np-risks-stat-badge np-risks-stat-badge--red">{RISKS_REGISTRY.filter(r => r.level === "high").length}</span>
           </div>
           <div className="np-risks-stat-text">Обрати внимание на рекомендации от Норма и прими решения по рискам.</div>
         </button>
         <button
           type="button"
-          className={`np-risks-stat np-risks-stat--rev ${filter === "no-measures" ? "is-active" : ""}`}
-          onClick={() => setFilter("no-measures")}
+          className={`np-risks-stat np-risks-stat--rev ${filter === "reassessed" ? "is-active" : ""}`}
+          onClick={() => setFilter("reassessed")}
         >
           <div className="np-risks-stat-head">
             <div className="np-risks-stat-title">Переоценено</div>
-            <span className="np-risks-stat-badge np-risks-stat-badge--amber">2</span>
+            <span className="np-risks-stat-badge np-risks-stat-badge--amber">{RISKS_REGISTRY.filter(r => r.reassessed).length}</span>
           </div>
           <div className="np-risks-stat-text">Норм скорректировал оценку риска на основе новых данных.</div>
         </button>
@@ -3495,7 +3496,7 @@ function RisksPage({
             <button type="button" className="np-risks-card" onClick={() => onOpenRisk(r)}>
               <div className="np-risks-card-top">
                 <span className={`np-risks-card-level np-risks-card-level--${r.level}`}>▲ {r.levelLabel}</span>
-                <span className="np-risks-card-new">Новый</span>
+                {r.isNew && <span className="np-risks-card-new">Новый</span>}
                 <span className="np-risks-card-id">{r.id}</span>
               </div>
               <div className="np-risks-card-title">{r.title}</div>
