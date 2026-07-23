@@ -121,6 +121,7 @@ function Icon({ name, size = 18 }: { name: string; size?: number }) {
 }
 
 const NAV = [
+  // nav items below
   { id: "home", label: "Главная", icon: "home" },
   { id: "events", label: "События", icon: "bolt" },
   { id: "risks", label: "Риски", icon: "shield" },
