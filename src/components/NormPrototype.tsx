@@ -2210,7 +2210,7 @@ function CompanySummaryModal({
   onOpenSource: (id: string) => void;
   onCloseSource: () => void;
   onOpenFocus: (fpId: string) => void;
-  onOpenRisks: (opts: { filter?: "high" | "no-measures"; riskId?: string }) => void;
+  onOpenRisks: (opts: { filter?: RiskFilter; riskId?: string }) => void;
   onClose: () => void;
   onDiscuss: () => void;
   onClarify: () => void;
@@ -2362,7 +2362,7 @@ function CompanySummaryModal({
                 <button
                   type="button"
                   className="np-summary-risk-chip np-summary-risk-chip--action"
-                  onClick={() => onOpenRisks({ filter: "no-measures" })}
+                  onClick={() => onOpenRisks({ filter: "reassessed" })}
                 >
                   <span className="np-summary-risk-num">{summary.meta.risksWithoutMeasures.value}</span>
                   <span className="np-summary-risk-label">{summary.meta.risksWithoutMeasures.label}</span>
