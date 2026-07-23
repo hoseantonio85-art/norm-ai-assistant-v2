@@ -2218,105 +2218,50 @@ function CompanySummaryModal({
   }, [activeSourceId, summary.sections]);
   const sourceRelation = source?.relation || null;
 
-  const renderDetailSection = (sec: SummarySection) => {
+  const renderSourceLine = (sec: SummarySection) => {
+    if (!sec.sources.length) return null;
     const preview = sec.sources.slice(0, 2);
     const more = Math.max(0, sec.sources.length - 2);
     return (
-      <section
-        key={sec.id}
-        className={`np-summary-island np-summary-detail-island np-summary-detail-island--${sec.tone}`}
-      >
-        <div className="np-summary-detail-body">
-          {sec.headline && (
-            <h3 className="np-summary-detail-headline">{sec.headline}</h3>
-          )}
-          <p className="np-summary-detail-text">{sec.text}</p>
-          {sec.actionLabel && sec.actionText && (
-            <p className="np-summary-detail-text">
-              <strong>{sec.actionLabel}:</strong> {sec.actionText}
-            </p>
-          )}
-          {(sec.sources.length > 0 || sec.title) && (
-            <div className="np-summary-tag-row">
-              <span className={`np-summary-tag np-summary-tag--${sec.tone}`}>
-                {sec.title}
-              </span>
-              {preview.map((s, i) => (
-                <button
-                  key={`${sec.id}-src-${i}`}
-                  type="button"
-                  className="np-summary-source-tag"
-                  onClick={() => onOpenSource(s.sourceId)}
-                >
-                  {s.label}
-                </button>
-              ))}
-              {more > 0 && (
-                <button
-                  type="button"
-                  className="np-summary-source-tag np-summary-source-tag--more"
-                  onClick={() => onOpenSource(sec.sources[2].sourceId)}
-                >
-                  + ещё {more}
-                </button>
-              )}
-            </div>
-          )}
-          {sec.focusPointId && sec.focusPointLabel && (
+      <div className="np-summary-source-line">
+        <span className="np-summary-source-line-label">Основания:</span>
+        {preview.map((s, i) => (
+          <span key={`${sec.id}-src-${i}`} className="np-summary-source-line-item">
             <button
               type="button"
-              className="np-summary-focus-link"
-              onClick={() => onOpenFocus(sec.focusPointId!)}
+              className="np-summary-source-linkbtn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenSource(s.sourceId);
+              }}
             >
-              Подробнее: {sec.focusPointLabel} →
+              {s.label}
             </button>
-          )}
-        </div>
-      </section>
+            {i < preview.length - 1 && <span className="np-summary-source-sep"> · </span>}
+          </span>
+        ))}
+        {more > 0 && (
+          <>
+            <span className="np-summary-source-sep"> · </span>
+            <button
+              type="button"
+              className="np-summary-source-linkbtn np-summary-source-linkbtn--more"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (sec.sources[2]) onOpenSource(sec.sources[2].sourceId);
+              }}
+            >
+              + ещё {more}
+            </button>
+          </>
+        )}
+      </div>
     );
   };
 
-  const renderGapsSection = (sec: SummarySection) => {
-    return (
-      <section
-        key={sec.id}
-        className="np-summary-island np-summary-detail-island np-summary-detail-island--neutral"
-      >
-        <div className="np-summary-detail-body">
-          {sec.headline && (
-            <h3 className="np-summary-detail-headline">{sec.headline}</h3>
-          )}
-          <p className="np-summary-detail-text">{sec.text}</p>
-          {sec.sources.length > 0 && (
-            <div className="np-summary-tag-row">
-              {sec.sources.map((s, i) => (
-                <button
-                  key={`${sec.id}-src-${i}`}
-                  type="button"
-                  className="np-summary-source-tag"
-                  onClick={() => onOpenSource(s.sourceId)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            className="np-summary-clarify-secondary"
-            onClick={onClarify}
-          >
-            Уточнить знания
-          </button>
-        </div>
-      </section>
-    );
-  };
-
-  const decision = summary.sections.find((s) => s.id === "decision");
-  const check = summary.sections.find((s) => s.id === "check");
-  const watch = summary.sections.find((s) => s.id === "watch");
-  const gaps = summary.sections.find((s) => s.id === "gaps");
+  const focusSections = summary.sections.filter(
+    (s) => s.id !== "gaps" && s.focusPointId,
+  );
 
   return (
     <div
