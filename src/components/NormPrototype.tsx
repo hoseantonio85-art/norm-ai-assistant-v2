@@ -2302,100 +2302,110 @@ function CompanySummaryModal({
         </header>
 
         <div className="np-company-summary-body">
-          <div className="np-summary-layout">
-            <div className="np-summary-main-col">
-              <section className="np-summary-group">
-                <h2 className="np-summary-h2">{summary.leadTitle}</h2>
-                <div className="np-summary-island np-summary-lead-island">
-                  <h3 className="np-summary-detail-headline">{summary.leadHeadline}</h3>
-                  <p className="np-summary-detail-text">{summary.leadText}</p>
-                  <div className="np-summary-lead-tags">
-                    <div className="np-summary-lead-tag-row">
-                      <span className="np-summary-tag np-summary-tag--orange">Требует решения</span>
-                      <span className="np-summary-secondary-text">
-                        {summary.requiredDecision.replace(/\.$/, "")}
-                      </span>
-                    </div>
-                    {summary.secondaryStatuses.map((s, i) => (
-                      <div key={i} className="np-summary-lead-tag-row">
-                        <span className={`np-summary-tag np-summary-tag--${s.tone}`}>
-                          {s.label}
-                        </span>
-                        <span className="np-summary-secondary-text">{s.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
+          <div className="np-summary-single">
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Главное за 30 секунд</h2>
+              <div className="np-summary-island np-summary-lead-island">
+                <h3 className="np-summary-detail-headline">{summary.leadHeadline}</h3>
+                <p className="np-summary-detail-text">{summary.leadText}</p>
+              </div>
+            </section>
 
-              <section className="np-summary-group">
-                <h2 className="np-summary-h2">Ситуация в деталях</h2>
-                <div className="np-summary-details-stack">
-                  {decision && renderDetailSection(decision)}
-                  {check && renderDetailSection(check)}
-                  {watch && renderDetailSection(watch)}
-                </div>
-              </section>
-
-              {gaps && (
-                <section className="np-summary-group">
-                  <h2 className="np-summary-h2">Что Норм пока видит не полностью</h2>
-                  {renderGapsSection(gaps)}
-                </section>
-              )}
-            </div>
-
-            <aside className="np-summary-side-col">
-              <section className="np-summary-island np-summary-meta-island">
-                <h3 className="np-summary-detail-headline np-summary-meta-title">Контекст сводки</h3>
-                <div className="np-summary-meta-group">
-                  <div className="np-summary-meta-group-title">За последние {summary.meta.period}</div>
-                  <ul className="np-summary-meta-list">
-                    <li><span className="np-summary-meta-num">{summary.meta.incidents.value}</span> {summary.meta.incidents.label}</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.externalSignals.value}</span> {summary.meta.externalSignals.label}</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.improvingMeasures.value}</span> {summary.meta.improvingMeasures.label}</li>
-                  </ul>
-                </div>
-                <div className="np-summary-meta-group">
-                  <div className="np-summary-meta-group-title">Риск-профиль</div>
-                  <ul className="np-summary-meta-list">
-                    <li><span className="np-summary-meta-num">{summary.meta.highRisks.value}</span> {summary.meta.highRisks.label}</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.risksWithoutMeasures.value}</span> {summary.meta.risksWithoutMeasures.label}</li>
-                  </ul>
-                </div>
-                <div className="np-summary-meta-group">
-                  <div className="np-summary-meta-group-title">Основание сводки</div>
-                  <ul className="np-summary-meta-list">
-                    <li><span className="np-summary-meta-num">{summary.meta.sourcesUsed}</span> использованных источников</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.knowledgeGaps}</span> области с нехваткой данных</li>
-                    <li>обновлено {summary.meta.updatedAtShort}</li>
-                  </ul>
-                </div>
-              </section>
-              <div className="np-summary-side-actions">
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Риск-профиль</h2>
+              <div className="np-summary-island np-summary-risk-island">
                 <button
                   type="button"
-                  className="np-focus-discuss np-summary-side-discuss"
+                  className="np-summary-risk-chip np-summary-risk-chip--action"
+                  onClick={() => onOpenRisks({ filter: "high" })}
+                >
+                  <span className="np-summary-risk-num">{summary.meta.highRisks.value}</span>
+                  <span className="np-summary-risk-label">{summary.meta.highRisks.label}</span>
+                  <span className="np-summary-risk-arrow" aria-hidden>→</span>
+                </button>
+                <button
+                  type="button"
+                  className="np-summary-risk-chip np-summary-risk-chip--action"
+                  onClick={() => onOpenRisks({ filter: "no-measures" })}
+                >
+                  <span className="np-summary-risk-num">{summary.meta.risksWithoutMeasures.value}</span>
+                  <span className="np-summary-risk-label">{summary.meta.risksWithoutMeasures.label}</span>
+                  <span className="np-summary-risk-arrow" aria-hidden>→</span>
+                </button>
+                <div className="np-summary-risk-chip np-summary-risk-chip--muted">
+                  <span className="np-summary-risk-label">Потери пока не рассчитаны</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Что сделать сейчас</h2>
+              <div className="np-summary-island np-summary-actions-island">
+                <ol className="np-summary-actions-list">
+                  <li>
+                    В течение трёх дней подтвердить резервных поставщиков и сроки
+                    переключения.
+                  </li>
+                  <li>
+                    Получить данные о продажах, маржинальности и клиентской активности,
+                    чтобы рассчитать возможные потери.
+                  </li>
+                </ol>
+                <button
+                  type="button"
+                  className="np-focus-discuss np-summary-actions-discuss"
                   onClick={onDiscuss}
                 >
                   Обсудить с Нормом
                 </button>
-                <button
-                  type="button"
-                  className="np-summary-side-link"
-                  onClick={() => onToast("Открытие раздела рисков в этом прототипе пока не реализовано")}
-                >
-                  Открыть все риски
-                </button>
-                <button
-                  type="button"
-                  className="np-summary-side-link"
-                  onClick={() => onToast("Открытие раздела инцидентов в этом прототипе пока не реализовано")}
-                >
-                  Открыть инциденты
-                </button>
               </div>
-            </aside>
+            </section>
+
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Фокусные точки</h2>
+              <div className="np-summary-focus-stack">
+                {focusSections.map((sec) => {
+                  const fp = FOCUS_POINTS.find((p) => p.id === sec.focusPointId);
+                  const relRisk = fp?.relatedRisk;
+                  return (
+                    <div
+                      key={sec.id}
+                      className={`np-summary-island np-summary-focus-island np-summary-focus-island--${sec.tone}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onOpenFocus(sec.focusPointId!)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onOpenFocus(sec.focusPointId!);
+                        }
+                      }}
+                    >
+                      <div className="np-summary-focus-head">
+                        <span className={`np-summary-tag np-summary-tag--${sec.tone}`}>
+                          {sec.title}
+                        </span>
+                        <span className="np-summary-focus-arrow" aria-hidden>→</span>
+                      </div>
+                      <p className="np-summary-detail-text">{sec.shortText || sec.text}</p>
+                      {renderSourceLine(sec)}
+                      {relRisk && (
+                        <button
+                          type="button"
+                          className="np-summary-risk-link"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenRisks({ riskId: relRisk.id });
+                          }}
+                        >
+                          {relRisk.id} · {relRisk.title}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           </div>
         </div>
 
