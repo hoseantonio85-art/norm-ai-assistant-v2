@@ -131,6 +131,8 @@ const NAV = [
   { id: "kb", label: "База знаний", icon: "book" },
 ];
 
+type RiskFilter = "all" | "new" | "high" | "reassessed";
+
 interface FocusSource {
   id?: string;
   type: string;
