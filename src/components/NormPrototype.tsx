@@ -2452,6 +2452,163 @@ function CompanySummaryModal({
   );
 }
 
+// ============ Risks list modal ============
+
+interface RiskRow {
+  id: string;
+  title: string;
+  area: string;
+  level: "high" | "medium" | "low";
+  levelLabel: string;
+  status: string;
+  hasEffectiveMeasures: boolean;
+  owner?: string;
+}
+
+const RISKS_REGISTRY: RiskRow[] = [
+  { id: "QNR-0214", title: "Нарушение непрерывности поставок", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false, owner: "Ирина Ковалёва" },
+  { id: "QNR-0187", title: "Снижение клиентской активности", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0331", title: "Массовые сбои в системе онлайн-расчётов", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true, owner: "Наталья Гусева" },
+  { id: "QNR-0102", title: "Утечка персональных данных клиентов", area: "ИТ и безопасность", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0119", title: "Дефицит GPU для инференса моделей", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0203", title: "Рост валютных издержек по закупкам", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0221", title: "Зависимость от одного логистического оператора", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0244", title: "Отставание от новых требований регулятора", area: "Комплаенс", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0256", title: "Уход ключевых сотрудников продуктовой команды", area: "Персонал", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0268", title: "Снижение маржинальности категории электроники", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0277", title: "Ошибки в рекомендациях AI-модели", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0289", title: "Простой основного склада более 24 часов", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0298", title: "Компрометация учётных записей администраторов", area: "ИТ и безопасность", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0305", title: "Задержка выпуска годовой отчётности", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0312", title: "Рост числа возвратов после смены поставщика", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0324", title: "Недоступность платёжного шлюза в пиковые часы", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0341", title: "Срыв сроков внедрения новой WMS", area: "Проекты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0356", title: "Штрафы за нарушение сроков доставки маркетплейса", area: "Комплаенс", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+];
+
+type RiskFilter = "all" | "high" | "no-measures";
+
+function RisksModal({
+  initialFilter,
+  initialRiskId,
+  onClose,
+}: {
+  initialFilter?: RiskFilter;
+  initialRiskId?: string;
+  onClose: () => void;
+}) {
+  const [filter, setFilter] = useState<RiskFilter>(initialFilter ?? "high");
+  const highlightId = initialRiskId ?? null;
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = document.getElementById(`np-risk-row-${highlightId}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId]);
+
+  const list = RISKS_REGISTRY.filter((r) => {
+    if (filter === "high") return r.level === "high";
+    if (filter === "no-measures") return !r.hasEffectiveMeasures;
+    return true;
+  });
+
+  const counts = {
+    all: RISKS_REGISTRY.length,
+    high: RISKS_REGISTRY.filter((r) => r.level === "high").length,
+    "no-measures": RISKS_REGISTRY.filter((r) => !r.hasEffectiveMeasures).length,
+  } as const;
+
+  return (
+    <div
+      className="np-company-summary-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Реестр рисков"
+    >
+      <div className="np-company-summary np-risks-modal" onClick={(e) => e.stopPropagation()}>
+        <header className="np-company-summary-head">
+          <div className="np-company-summary-head-main">
+            <LogoMark size={32} />
+            <div>
+              <h1 className="np-company-summary-title">Реестр рисков</h1>
+              <div className="np-company-summary-updated">Показано {list.length} из {counts.all}</div>
+            </div>
+          </div>
+          <div className="np-company-summary-head-actions">
+            <button className="np-icon-btn np-company-summary-close" onClick={onClose} aria-label="Закрыть">
+              <Icon name="close" size={18} />
+            </button>
+          </div>
+        </header>
+        <div className="np-company-summary-body">
+          <div className="np-risks-filters">
+            <button
+              type="button"
+              className={`np-risks-filter ${filter === "high" ? "active" : ""}`}
+              onClick={() => setFilter("high")}
+            >
+              Высокие · {counts.high}
+            </button>
+            <button
+              type="button"
+              className={`np-risks-filter ${filter === "no-measures" ? "active" : ""}`}
+              onClick={() => setFilter("no-measures")}
+            >
+              Без эффективных мер · {counts["no-measures"]}
+            </button>
+            <button
+              type="button"
+              className={`np-risks-filter ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              Все · {counts.all}
+            </button>
+          </div>
+          <ul className="np-risks-list">
+            {list.map((r) => (
+              <li
+                key={r.id}
+                id={`np-risk-row-${r.id}`}
+                className={`np-risks-row ${highlightId === r.id ? "highlight" : ""}`}
+              >
+                <div className="np-risks-row-main">
+                  <div className="np-risks-row-head">
+                    <span className="np-risks-row-id">{r.id}</span>
+                    <span className={`np-risks-row-level np-risks-row-level--${r.level}`}>{r.levelLabel}</span>
+                    {!r.hasEffectiveMeasures && (
+                      <span className="np-risks-row-flag">Без эффективных мер</span>
+                    )}
+                  </div>
+                  <div className="np-risks-row-title">{r.title}</div>
+                  <div className="np-risks-row-meta">
+                    {r.area}
+                    {r.owner ? ` · ${r.owner}` : ""}
+                    {` · ${r.status}`}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function NormPrototype() {
   const [modalQuery, setModalQuery] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
