@@ -2617,6 +2617,7 @@ export default function NormPrototype() {
   const [focusSourceIdx, setFocusSourceIdx] = useState<number | "list" | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summarySourceId, setSummarySourceId] = useState<string | null>(null);
+  const [risksModal, setRisksModal] = useState<{ filter?: RiskFilter; riskId?: string } | null>(null);
   const [activeNav, setActiveNav] = useState<string>("home");
   const [profileAreaOpen, setProfileAreaOpen] = useState(false);
   const [knowledgeBaseRootRequest, setKnowledgeBaseRootRequest] = useState(0);
@@ -2869,6 +2870,12 @@ export default function NormPrototype() {
             }
           }}
           onClose={() => { setSummarySourceId(null); setSummaryOpen(false); }}
+          onOpenRisks={(opts) => {
+            setRisksModal({
+              filter: opts.filter ?? (opts.riskId ? "all" : "high"),
+              riskId: opts.riskId,
+            });
+          }}
           onDiscuss={() => {
             setSummarySourceId(null);
             setSummaryOpen(false);
@@ -2881,6 +2888,13 @@ export default function NormPrototype() {
           }}
           onToast={(m) => setToast(m)}
           focusOnTop={focusIdx !== null}
+        />
+      )}
+      {risksModal && (
+        <RisksModal
+          initialFilter={risksModal.filter}
+          initialRiskId={risksModal.riskId}
+          onClose={() => setRisksModal(null)}
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
