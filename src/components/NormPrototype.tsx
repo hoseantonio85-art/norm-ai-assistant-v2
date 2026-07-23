@@ -2162,6 +2162,7 @@ function CompanySummaryModal({
   onOpenSource,
   onCloseSource,
   onOpenFocus,
+  onOpenRisks,
   onClose,
   onDiscuss,
   onClarify,
@@ -2173,6 +2174,7 @@ function CompanySummaryModal({
   onOpenSource: (id: string) => void;
   onCloseSource: () => void;
   onOpenFocus: (fpId: string) => void;
+  onOpenRisks: (opts: { filter?: "high" | "no-measures"; riskId?: string }) => void;
   onClose: () => void;
   onDiscuss: () => void;
   onClarify: () => void;
