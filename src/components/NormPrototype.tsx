@@ -2499,30 +2499,32 @@ interface RiskRow {
   status: string;
   hasEffectiveMeasures: boolean;
   owner?: string;
+  isNew?: boolean;
+  reassessed?: boolean;
 }
 
 const RISKS_REGISTRY: RiskRow[] = [
   { id: "QNR-0214", title: "Нарушение непрерывности поставок", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false, owner: "Ирина Ковалёва" },
-  { id: "QNR-0187", title: "Снижение клиентской активности", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
-  { id: "QNR-0331", title: "Массовые сбои в системе онлайн-расчётов", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true, owner: "Наталья Гусева" },
+  { id: "QNR-0187", title: "Снижение клиентской активности", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false, isNew: true },
+  { id: "QNR-0331", title: "Массовые сбои в системе онлайн-расчётов", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true, owner: "Наталья Гусева", reassessed: true },
   { id: "QNR-0102", title: "Утечка персональных данных клиентов", area: "ИТ и безопасность", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
-  { id: "QNR-0119", title: "Дефицит GPU для инференса моделей", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0119", title: "Дефицит GPU для инференса моделей", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false, isNew: true },
   { id: "QNR-0203", title: "Рост валютных издержек по закупкам", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
   { id: "QNR-0221", title: "Зависимость от одного логистического оператора", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
   { id: "QNR-0244", title: "Отставание от новых требований регулятора", area: "Комплаенс", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
   { id: "QNR-0256", title: "Уход ключевых сотрудников продуктовой команды", area: "Персонал", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
   { id: "QNR-0268", title: "Снижение маржинальности категории электроники", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
-  { id: "QNR-0277", title: "Ошибки в рекомендациях AI-модели", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0277", title: "Ошибки в рекомендациях AI-модели", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false, isNew: true },
   { id: "QNR-0289", title: "Простой основного склада более 24 часов", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
   { id: "QNR-0298", title: "Компрометация учётных записей администраторов", area: "ИТ и безопасность", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
-  { id: "QNR-0305", title: "Задержка выпуска годовой отчётности", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0305", title: "Задержка выпуска годовой отчётности", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true, reassessed: true },
   { id: "QNR-0312", title: "Рост числа возвратов после смены поставщика", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
   { id: "QNR-0324", title: "Недоступность платёжного шлюза в пиковые часы", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
-  { id: "QNR-0341", title: "Срыв сроков внедрения новой WMS", area: "Проекты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0341", title: "Срыв сроков внедрения новой WMS", area: "Проекты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false, isNew: true },
   { id: "QNR-0356", title: "Штрафы за нарушение сроков доставки маркетплейса", area: "Комплаенс", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
 ];
 
-type RiskFilter = "all" | "high" | "no-measures";
+type RiskFilter = "all" | "new" | "high" | "reassessed";
 
 // ============ Risks page & Risk detail modal ============
 
