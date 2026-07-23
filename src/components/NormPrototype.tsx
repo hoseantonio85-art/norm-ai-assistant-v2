@@ -578,6 +578,7 @@ interface SummarySection {
   tone: "orange" | "blue" | "green" | "neutral";
   headline: string;
   text: string;
+  shortText?: string;
   actionLabel?: string;
   actionText?: string;
   sources: SummarySourceRef[];
@@ -619,9 +620,9 @@ const COMPANY_SUMMARY: CompanySummary = {
   clarificationQuestion:
     "Помоги уточнить данные о продажах критичных товаров, готовности резервных поставщиков и клиентской активности в 12 затронутых городах",
   leadTitle: "Главное за 30 сек",
-  leadHeadline: "Поставки — главная проблема сейчас",
+  leadHeadline: "Ситуация требует внимания",
   leadText:
-    "Пять из семи задержек за последний месяц пришлись на трёх поставщиков. За тот же период доля отсутствующих товаров выросла с 6% до 24%. Возможные потери пока не рассчитаны.",
+    "За последние 30 дней основное ухудшение связано с поставками: доля отсутствующих товаров выросла с 6% до 24%. В компании 18 высоких рисков, 6 из них без эффективных мер. Есть новый сигнал возможного оттока клиентов, а по ИТ-сбоям появилась положительная динамика. Возможные финансовые последствия пока не рассчитаны.",
   requiredDecision: "подтвердить резервный сценарий поставок.",
   secondaryStatuses: [
     { tone: "blue", label: "Проверить", text: "есть сигнал возможного оттока клиентов" },
@@ -630,10 +631,12 @@ const COMPANY_SUMMARY: CompanySummary = {
   sections: [
     {
       id: "decision",
-      title: "Требует решения",
+      title: "Решить сейчас",
       tone: "orange",
       headline: "Нужен резервный сценарий поставок",
       text: "Пять из семи задержек за последний месяц пришлись на трёх поставщиков. За тот же период доля отсутствующих товаров выросла с 6% до 24%. Возможный объём потерь продаж пока не рассчитан.",
+      shortText:
+        "Задержки поставок влияют на наличие товаров. Рост отсутствующих позиций: с 6% до 24%.",
       actionLabel: "Что нужно сделать",
       actionText:
         "подтвердить резервных поставщиков и сроки переключения по трём проблемным контрагентам.",
@@ -668,10 +671,11 @@ const COMPANY_SUMMARY: CompanySummary = {
     },
     {
       id: "check",
-      title: "Нужно проверить",
+      title: "Проверить",
       tone: "blue",
       headline: "Возможный отток клиентов в 12 городах",
       text: "Конкурент запустил бесплатную доставку в 12 городах присутствия компании. Стоимость доставки уже входит в число частых причин отказа от заказа. Поэтому есть сигнал возможного оттока, но снижение конверсии и повторных заказов пока не подтверждено.",
+      shortText: "Возможный отток клиентов в 12 городах.",
       actionLabel: "Что проверить",
       actionText:
         "клиентскую активность и конверсию в затронутых городах.",
@@ -700,10 +704,12 @@ const COMPANY_SUMMARY: CompanySummary = {
     },
     {
       id: "watch",
-      title: "Под наблюдением",
+      title: "Наблюдать",
       tone: "green",
       headline: "Результат ИТ-меры выглядит положительно",
       text: "После подключения дополнительного мониторинга число критичных ошибок снизилось на 37%, а массовые сбои не повторялись 21 день. Это хороший ранний результат, но период наблюдения пока слишком короткий, чтобы подтвердить эффективность меры и снизить оценку риска.",
+      shortText:
+        "Критичные ИТ-ошибки снизились на 37%, массовых сбоев не было 21 день.",
       actionLabel: "Решение сейчас не требуется",
       actionText:
         "продолжить наблюдение и проверить результат при сопоставимой и пиковой нагрузке.",
@@ -2156,6 +2162,7 @@ function CompanySummaryModal({
   onOpenSource,
   onCloseSource,
   onOpenFocus,
+  onOpenRisks,
   onClose,
   onDiscuss,
   onClarify,
@@ -2167,6 +2174,7 @@ function CompanySummaryModal({
   onOpenSource: (id: string) => void;
   onCloseSource: () => void;
   onOpenFocus: (fpId: string) => void;
+  onOpenRisks: (opts: { filter?: "high" | "no-measures"; riskId?: string }) => void;
   onClose: () => void;
   onDiscuss: () => void;
   onClarify: () => void;
@@ -2210,105 +2218,50 @@ function CompanySummaryModal({
   }, [activeSourceId, summary.sections]);
   const sourceRelation = source?.relation || null;
 
-  const renderDetailSection = (sec: SummarySection) => {
+  const renderSourceLine = (sec: SummarySection) => {
+    if (!sec.sources.length) return null;
     const preview = sec.sources.slice(0, 2);
     const more = Math.max(0, sec.sources.length - 2);
     return (
-      <section
-        key={sec.id}
-        className={`np-summary-island np-summary-detail-island np-summary-detail-island--${sec.tone}`}
-      >
-        <div className="np-summary-detail-body">
-          {sec.headline && (
-            <h3 className="np-summary-detail-headline">{sec.headline}</h3>
-          )}
-          <p className="np-summary-detail-text">{sec.text}</p>
-          {sec.actionLabel && sec.actionText && (
-            <p className="np-summary-detail-text">
-              <strong>{sec.actionLabel}:</strong> {sec.actionText}
-            </p>
-          )}
-          {(sec.sources.length > 0 || sec.title) && (
-            <div className="np-summary-tag-row">
-              <span className={`np-summary-tag np-summary-tag--${sec.tone}`}>
-                {sec.title}
-              </span>
-              {preview.map((s, i) => (
-                <button
-                  key={`${sec.id}-src-${i}`}
-                  type="button"
-                  className="np-summary-source-tag"
-                  onClick={() => onOpenSource(s.sourceId)}
-                >
-                  {s.label}
-                </button>
-              ))}
-              {more > 0 && (
-                <button
-                  type="button"
-                  className="np-summary-source-tag np-summary-source-tag--more"
-                  onClick={() => onOpenSource(sec.sources[2].sourceId)}
-                >
-                  + ещё {more}
-                </button>
-              )}
-            </div>
-          )}
-          {sec.focusPointId && sec.focusPointLabel && (
+      <div className="np-summary-source-line">
+        <span className="np-summary-source-line-label">Основания:</span>
+        {preview.map((s, i) => (
+          <span key={`${sec.id}-src-${i}`} className="np-summary-source-line-item">
             <button
               type="button"
-              className="np-summary-focus-link"
-              onClick={() => onOpenFocus(sec.focusPointId!)}
+              className="np-summary-source-linkbtn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenSource(s.sourceId);
+              }}
             >
-              Подробнее: {sec.focusPointLabel} →
+              {s.label}
             </button>
-          )}
-        </div>
-      </section>
+            {i < preview.length - 1 && <span className="np-summary-source-sep"> · </span>}
+          </span>
+        ))}
+        {more > 0 && (
+          <>
+            <span className="np-summary-source-sep"> · </span>
+            <button
+              type="button"
+              className="np-summary-source-linkbtn np-summary-source-linkbtn--more"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (sec.sources[2]) onOpenSource(sec.sources[2].sourceId);
+              }}
+            >
+              + ещё {more}
+            </button>
+          </>
+        )}
+      </div>
     );
   };
 
-  const renderGapsSection = (sec: SummarySection) => {
-    return (
-      <section
-        key={sec.id}
-        className="np-summary-island np-summary-detail-island np-summary-detail-island--neutral"
-      >
-        <div className="np-summary-detail-body">
-          {sec.headline && (
-            <h3 className="np-summary-detail-headline">{sec.headline}</h3>
-          )}
-          <p className="np-summary-detail-text">{sec.text}</p>
-          {sec.sources.length > 0 && (
-            <div className="np-summary-tag-row">
-              {sec.sources.map((s, i) => (
-                <button
-                  key={`${sec.id}-src-${i}`}
-                  type="button"
-                  className="np-summary-source-tag"
-                  onClick={() => onOpenSource(s.sourceId)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            className="np-summary-clarify-secondary"
-            onClick={onClarify}
-          >
-            Уточнить знания
-          </button>
-        </div>
-      </section>
-    );
-  };
-
-  const decision = summary.sections.find((s) => s.id === "decision");
-  const check = summary.sections.find((s) => s.id === "check");
-  const watch = summary.sections.find((s) => s.id === "watch");
-  const gaps = summary.sections.find((s) => s.id === "gaps");
+  const focusSections = summary.sections.filter(
+    (s) => s.id !== "gaps" && s.focusPointId,
+  );
 
   return (
     <div
@@ -2349,100 +2302,110 @@ function CompanySummaryModal({
         </header>
 
         <div className="np-company-summary-body">
-          <div className="np-summary-layout">
-            <div className="np-summary-main-col">
-              <section className="np-summary-group">
-                <h2 className="np-summary-h2">{summary.leadTitle}</h2>
-                <div className="np-summary-island np-summary-lead-island">
-                  <h3 className="np-summary-detail-headline">{summary.leadHeadline}</h3>
-                  <p className="np-summary-detail-text">{summary.leadText}</p>
-                  <div className="np-summary-lead-tags">
-                    <div className="np-summary-lead-tag-row">
-                      <span className="np-summary-tag np-summary-tag--orange">Требует решения</span>
-                      <span className="np-summary-secondary-text">
-                        {summary.requiredDecision.replace(/\.$/, "")}
-                      </span>
-                    </div>
-                    {summary.secondaryStatuses.map((s, i) => (
-                      <div key={i} className="np-summary-lead-tag-row">
-                        <span className={`np-summary-tag np-summary-tag--${s.tone}`}>
-                          {s.label}
-                        </span>
-                        <span className="np-summary-secondary-text">{s.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
+          <div className="np-summary-single">
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Главное за 30 секунд</h2>
+              <div className="np-summary-island np-summary-lead-island">
+                <h3 className="np-summary-detail-headline">{summary.leadHeadline}</h3>
+                <p className="np-summary-detail-text">{summary.leadText}</p>
+              </div>
+            </section>
 
-              <section className="np-summary-group">
-                <h2 className="np-summary-h2">Ситуация в деталях</h2>
-                <div className="np-summary-details-stack">
-                  {decision && renderDetailSection(decision)}
-                  {check && renderDetailSection(check)}
-                  {watch && renderDetailSection(watch)}
-                </div>
-              </section>
-
-              {gaps && (
-                <section className="np-summary-group">
-                  <h2 className="np-summary-h2">Что Норм пока видит не полностью</h2>
-                  {renderGapsSection(gaps)}
-                </section>
-              )}
-            </div>
-
-            <aside className="np-summary-side-col">
-              <section className="np-summary-island np-summary-meta-island">
-                <h3 className="np-summary-detail-headline np-summary-meta-title">Контекст сводки</h3>
-                <div className="np-summary-meta-group">
-                  <div className="np-summary-meta-group-title">За последние {summary.meta.period}</div>
-                  <ul className="np-summary-meta-list">
-                    <li><span className="np-summary-meta-num">{summary.meta.incidents.value}</span> {summary.meta.incidents.label}</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.externalSignals.value}</span> {summary.meta.externalSignals.label}</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.improvingMeasures.value}</span> {summary.meta.improvingMeasures.label}</li>
-                  </ul>
-                </div>
-                <div className="np-summary-meta-group">
-                  <div className="np-summary-meta-group-title">Риск-профиль</div>
-                  <ul className="np-summary-meta-list">
-                    <li><span className="np-summary-meta-num">{summary.meta.highRisks.value}</span> {summary.meta.highRisks.label}</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.risksWithoutMeasures.value}</span> {summary.meta.risksWithoutMeasures.label}</li>
-                  </ul>
-                </div>
-                <div className="np-summary-meta-group">
-                  <div className="np-summary-meta-group-title">Основание сводки</div>
-                  <ul className="np-summary-meta-list">
-                    <li><span className="np-summary-meta-num">{summary.meta.sourcesUsed}</span> использованных источников</li>
-                    <li><span className="np-summary-meta-num">{summary.meta.knowledgeGaps}</span> области с нехваткой данных</li>
-                    <li>обновлено {summary.meta.updatedAtShort}</li>
-                  </ul>
-                </div>
-              </section>
-              <div className="np-summary-side-actions">
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Риск-профиль</h2>
+              <div className="np-summary-island np-summary-risk-island">
                 <button
                   type="button"
-                  className="np-focus-discuss np-summary-side-discuss"
+                  className="np-summary-risk-chip np-summary-risk-chip--action"
+                  onClick={() => onOpenRisks({ filter: "high" })}
+                >
+                  <span className="np-summary-risk-num">{summary.meta.highRisks.value}</span>
+                  <span className="np-summary-risk-label">{summary.meta.highRisks.label}</span>
+                  <span className="np-summary-risk-arrow" aria-hidden>→</span>
+                </button>
+                <button
+                  type="button"
+                  className="np-summary-risk-chip np-summary-risk-chip--action"
+                  onClick={() => onOpenRisks({ filter: "no-measures" })}
+                >
+                  <span className="np-summary-risk-num">{summary.meta.risksWithoutMeasures.value}</span>
+                  <span className="np-summary-risk-label">{summary.meta.risksWithoutMeasures.label}</span>
+                  <span className="np-summary-risk-arrow" aria-hidden>→</span>
+                </button>
+                <div className="np-summary-risk-chip np-summary-risk-chip--muted">
+                  <span className="np-summary-risk-label">Потери пока не рассчитаны</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Что сделать сейчас</h2>
+              <div className="np-summary-island np-summary-actions-island">
+                <ol className="np-summary-actions-list">
+                  <li>
+                    В течение трёх дней подтвердить резервных поставщиков и сроки
+                    переключения.
+                  </li>
+                  <li>
+                    Получить данные о продажах, маржинальности и клиентской активности,
+                    чтобы рассчитать возможные потери.
+                  </li>
+                </ol>
+                <button
+                  type="button"
+                  className="np-focus-discuss np-summary-actions-discuss"
                   onClick={onDiscuss}
                 >
                   Обсудить с Нормом
                 </button>
-                <button
-                  type="button"
-                  className="np-summary-side-link"
-                  onClick={() => onToast("Открытие раздела рисков в этом прототипе пока не реализовано")}
-                >
-                  Открыть все риски
-                </button>
-                <button
-                  type="button"
-                  className="np-summary-side-link"
-                  onClick={() => onToast("Открытие раздела инцидентов в этом прототипе пока не реализовано")}
-                >
-                  Открыть инциденты
-                </button>
               </div>
-            </aside>
+            </section>
+
+            <section className="np-summary-group">
+              <h2 className="np-summary-h2">Фокусные точки</h2>
+              <div className="np-summary-focus-stack">
+                {focusSections.map((sec) => {
+                  const fp = FOCUS_POINTS.find((p) => p.id === sec.focusPointId);
+                  const relRisk = fp?.relatedRisk;
+                  return (
+                    <div
+                      key={sec.id}
+                      className={`np-summary-island np-summary-focus-island np-summary-focus-island--${sec.tone}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => onOpenFocus(sec.focusPointId!)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onOpenFocus(sec.focusPointId!);
+                        }
+                      }}
+                    >
+                      <div className="np-summary-focus-head">
+                        <span className={`np-summary-tag np-summary-tag--${sec.tone}`}>
+                          {sec.title}
+                        </span>
+                        <span className="np-summary-focus-arrow" aria-hidden>→</span>
+                      </div>
+                      <p className="np-summary-detail-text">{sec.shortText || sec.text}</p>
+                      {renderSourceLine(sec)}
+                      {relRisk && (
+                        <button
+                          type="button"
+                          className="np-summary-risk-link"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenRisks({ riskId: relRisk.id });
+                          }}
+                        >
+                          {relRisk.id} · {relRisk.title}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
           </div>
         </div>
 
@@ -2489,6 +2452,163 @@ function CompanySummaryModal({
   );
 }
 
+// ============ Risks list modal ============
+
+interface RiskRow {
+  id: string;
+  title: string;
+  area: string;
+  level: "high" | "medium" | "low";
+  levelLabel: string;
+  status: string;
+  hasEffectiveMeasures: boolean;
+  owner?: string;
+}
+
+const RISKS_REGISTRY: RiskRow[] = [
+  { id: "QNR-0214", title: "Нарушение непрерывности поставок", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false, owner: "Ирина Ковалёва" },
+  { id: "QNR-0187", title: "Снижение клиентской активности", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0331", title: "Массовые сбои в системе онлайн-расчётов", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true, owner: "Наталья Гусева" },
+  { id: "QNR-0102", title: "Утечка персональных данных клиентов", area: "ИТ и безопасность", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0119", title: "Дефицит GPU для инференса моделей", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0203", title: "Рост валютных издержек по закупкам", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0221", title: "Зависимость от одного логистического оператора", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0244", title: "Отставание от новых требований регулятора", area: "Комплаенс", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0256", title: "Уход ключевых сотрудников продуктовой команды", area: "Персонал", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0268", title: "Снижение маржинальности категории электроники", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0277", title: "Ошибки в рекомендациях AI-модели", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0289", title: "Простой основного склада более 24 часов", area: "Поставки и логистика", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0298", title: "Компрометация учётных записей администраторов", area: "ИТ и безопасность", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0305", title: "Задержка выпуска годовой отчётности", area: "Финансы", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0312", title: "Рост числа возвратов после смены поставщика", area: "Клиенты и продукты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0324", title: "Недоступность платёжного шлюза в пиковые часы", area: "ИТ и инфраструктура", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+  { id: "QNR-0341", title: "Срыв сроков внедрения новой WMS", area: "Проекты", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: false },
+  { id: "QNR-0356", title: "Штрафы за нарушение сроков доставки маркетплейса", area: "Комплаенс", level: "high", levelLabel: "Высокий", status: "Действующий", hasEffectiveMeasures: true },
+];
+
+type RiskFilter = "all" | "high" | "no-measures";
+
+function RisksModal({
+  initialFilter,
+  initialRiskId,
+  onClose,
+}: {
+  initialFilter?: RiskFilter;
+  initialRiskId?: string;
+  onClose: () => void;
+}) {
+  const [filter, setFilter] = useState<RiskFilter>(initialFilter ?? "high");
+  const highlightId = initialRiskId ?? null;
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = document.getElementById(`np-risk-row-${highlightId}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightId]);
+
+  const list = RISKS_REGISTRY.filter((r) => {
+    if (filter === "high") return r.level === "high";
+    if (filter === "no-measures") return !r.hasEffectiveMeasures;
+    return true;
+  });
+
+  const counts = {
+    all: RISKS_REGISTRY.length,
+    high: RISKS_REGISTRY.filter((r) => r.level === "high").length,
+    "no-measures": RISKS_REGISTRY.filter((r) => !r.hasEffectiveMeasures).length,
+  } as const;
+
+  return (
+    <div
+      className="np-company-summary-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Реестр рисков"
+    >
+      <div className="np-company-summary np-risks-modal" onClick={(e) => e.stopPropagation()}>
+        <header className="np-company-summary-head">
+          <div className="np-company-summary-head-main">
+            <LogoMark size={32} />
+            <div>
+              <h1 className="np-company-summary-title">Реестр рисков</h1>
+              <div className="np-company-summary-updated">Показано {list.length} из {counts.all}</div>
+            </div>
+          </div>
+          <div className="np-company-summary-head-actions">
+            <button className="np-icon-btn np-company-summary-close" onClick={onClose} aria-label="Закрыть">
+              <Icon name="close" size={18} />
+            </button>
+          </div>
+        </header>
+        <div className="np-company-summary-body">
+          <div className="np-risks-filters">
+            <button
+              type="button"
+              className={`np-risks-filter ${filter === "high" ? "active" : ""}`}
+              onClick={() => setFilter("high")}
+            >
+              Высокие · {counts.high}
+            </button>
+            <button
+              type="button"
+              className={`np-risks-filter ${filter === "no-measures" ? "active" : ""}`}
+              onClick={() => setFilter("no-measures")}
+            >
+              Без эффективных мер · {counts["no-measures"]}
+            </button>
+            <button
+              type="button"
+              className={`np-risks-filter ${filter === "all" ? "active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              Все · {counts.all}
+            </button>
+          </div>
+          <ul className="np-risks-list">
+            {list.map((r) => (
+              <li
+                key={r.id}
+                id={`np-risk-row-${r.id}`}
+                className={`np-risks-row ${highlightId === r.id ? "highlight" : ""}`}
+              >
+                <div className="np-risks-row-main">
+                  <div className="np-risks-row-head">
+                    <span className="np-risks-row-id">{r.id}</span>
+                    <span className={`np-risks-row-level np-risks-row-level--${r.level}`}>{r.levelLabel}</span>
+                    {!r.hasEffectiveMeasures && (
+                      <span className="np-risks-row-flag">Без эффективных мер</span>
+                    )}
+                  </div>
+                  <div className="np-risks-row-title">{r.title}</div>
+                  <div className="np-risks-row-meta">
+                    {r.area}
+                    {r.owner ? ` · ${r.owner}` : ""}
+                    {` · ${r.status}`}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function NormPrototype() {
   const [modalQuery, setModalQuery] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -2497,6 +2617,7 @@ export default function NormPrototype() {
   const [focusSourceIdx, setFocusSourceIdx] = useState<number | "list" | null>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summarySourceId, setSummarySourceId] = useState<string | null>(null);
+  const [risksModal, setRisksModal] = useState<{ filter?: RiskFilter; riskId?: string } | null>(null);
   const [activeNav, setActiveNav] = useState<string>("home");
   const [profileAreaOpen, setProfileAreaOpen] = useState(false);
   const [knowledgeBaseRootRequest, setKnowledgeBaseRootRequest] = useState(0);
@@ -2749,6 +2870,12 @@ export default function NormPrototype() {
             }
           }}
           onClose={() => { setSummarySourceId(null); setSummaryOpen(false); }}
+          onOpenRisks={(opts) => {
+            setRisksModal({
+              filter: opts.filter ?? (opts.riskId ? "all" : "high"),
+              riskId: opts.riskId,
+            });
+          }}
           onDiscuss={() => {
             setSummarySourceId(null);
             setSummaryOpen(false);
@@ -2761,6 +2888,13 @@ export default function NormPrototype() {
           }}
           onToast={(m) => setToast(m)}
           focusOnTop={focusIdx !== null}
+        />
+      )}
+      {risksModal && (
+        <RisksModal
+          initialFilter={risksModal.filter}
+          initialRiskId={risksModal.riskId}
+          onClose={() => setRisksModal(null)}
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
