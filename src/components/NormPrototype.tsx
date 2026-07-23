@@ -2547,6 +2547,7 @@ interface RiskDetail {
   objectMeta: string;
   hasNewRiskAlert?: boolean;
   newRiskBrief?: string;
+  verdict?: NormVerdict;
   utilization: {
     kind: "direct" | "indirect" | "credit";
     label: string;
@@ -2564,10 +2565,10 @@ interface RiskDetail {
     zone: string;
     comment: string;
   };
-  description: string;
-  factors: string[];
-  consequences: string[];
-  recommendations: string[];
+  description?: string;
+  factors?: string[];
+  consequences?: string[];
+  recommendations?: string[];
   measures: {
     id: string;
     title: string;
@@ -2578,6 +2579,17 @@ interface RiskDetail {
   }[];
   currentEffectiveness: number; // percent
   ownerPath: string;
+}
+
+type VerdictStatus = "decision" | "check" | "improvement" | "new";
+
+interface NormVerdict {
+  status: VerdictStatus;
+  statusLabel: string;
+  title: string;
+  text: string;
+  nextAction: string;
+  sourceIds: string[];
 }
 
 const DEFAULT_RISK_DETAIL: Omit<RiskDetail, "id" | "title" | "category" | "levelKey" | "levelLabel"> = {
