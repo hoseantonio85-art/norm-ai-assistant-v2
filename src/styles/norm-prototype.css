@@ -44,7 +44,41 @@
   display: inline-block;
 }
 .np-hello-summary-arrow { margin-left: 6px; }
-.np-hello-summary:hover .np-hello-summary-status { color: #B45309; }
+.np-hello-summary-status {
+  background-image: linear-gradient(
+    90deg,
+    #D97706 0%,
+    #D97706 35%,
+    #F59E0B 50%,
+    #D97706 65%,
+    #D97706 100%
+  );
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: np-hello-status-shimmer 7.5s ease-in-out infinite;
+}
+@keyframes np-hello-status-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+.np-hello-summary:hover .np-hello-summary-status {
+  color: #B45309;
+  -webkit-text-fill-color: #B45309;
+  background-image: none;
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .np-hello-summary-status {
+    animation: none;
+    background-image: none;
+    -webkit-text-fill-color: currentColor;
+    color: #D97706;
+  }
+}
 .np-hello-summary:hover .np-hello-summary-arrow {
   color: #B45309;
   transform: translateX(4px);
