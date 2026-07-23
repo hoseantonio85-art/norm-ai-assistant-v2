@@ -3389,6 +3389,8 @@ export default function NormPrototype() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summarySourceId, setSummarySourceId] = useState<string | null>(null);
   const [risksModal, setRisksModal] = useState<{ filter?: RiskFilter; riskId?: string } | null>(null);
+  const [risksPageFilter, setRisksPageFilter] = useState<RiskFilter | undefined>(undefined);
+  const [openRiskRow, setOpenRiskRow] = useState<RiskRow | null>(null);
   const [activeNav, setActiveNav] = useState<string>("home");
   const [profileAreaOpen, setProfileAreaOpen] = useState(false);
   const [knowledgeBaseRootRequest, setKnowledgeBaseRootRequest] = useState(0);
@@ -3408,6 +3410,7 @@ export default function NormPrototype() {
 
   const handleNavigation = (navId: string) => {
     setActiveNav(navId);
+    if (navId !== "risks") setRisksPageFilter(undefined);
     if (navId !== "kb") {
       setProfileAreaOpen(false);
     } else {
@@ -3479,6 +3482,11 @@ export default function NormPrototype() {
             onOpenChat={(q) => openWith(q)}
             onAreaViewChange={setProfileAreaOpen}
             rootRequest={knowledgeBaseRootRequest}
+          />
+        ) : activeNav === "risks" ? (
+          <RisksPage
+            initialFilter={risksPageFilter}
+            onOpenRisk={(row) => setOpenRiskRow(row)}
           />
         ) : (
         <div className="np-page-container">
@@ -3642,10 +3650,17 @@ export default function NormPrototype() {
           }}
           onClose={() => { setSummarySourceId(null); setSummaryOpen(false); }}
           onOpenRisks={(opts) => {
-            setRisksModal({
-              filter: opts.filter ?? (opts.riskId ? "all" : "high"),
-              riskId: opts.riskId,
-            });
+            const row = opts.riskId ? RISKS_REGISTRY.find((r) => r.id === opts.riskId) : null;
+            if (row) {
+              setSummarySourceId(null);
+              setSummaryOpen(false);
+              setOpenRiskRow(row);
+            } else {
+              setSummarySourceId(null);
+              setSummaryOpen(false);
+              setRisksPageFilter(opts.filter ?? "high");
+              handleNavigation("risks");
+            }
           }}
           onDiscuss={() => {
             setSummarySourceId(null);
@@ -3661,11 +3676,12 @@ export default function NormPrototype() {
           focusOnTop={focusIdx !== null}
         />
       )}
-      {risksModal && (
-        <RisksModal
-          initialFilter={risksModal.filter}
-          initialRiskId={risksModal.riskId}
-          onClose={() => setRisksModal(null)}
+      {openRiskRow && (
+        <RiskDetailModal
+          risk={buildRiskDetail(openRiskRow)}
+          onClose={() => setOpenRiskRow(null)}
+          onNavigateToProfile={() => { setOpenRiskRow(null); handleNavigation("kb"); }}
+          onToast={(m) => setToast(m)}
         />
       )}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
